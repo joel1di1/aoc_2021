@@ -13,28 +13,18 @@ sums = Array.new(@length, 0)
   end
 end
 
-gamma_rate = sums.map{|b| b > (lines.count/2) ? 1 : 0}.join.to_i(2)
-epsilon_rate = sums.map{|b| b < (lines.count/2) ? 1 : 0}.join.to_i(2)
+gamma_rate = sums.map{|b| b > (lines.count.to_f/2) ? 1 : 0}.join.to_i(2)
+epsilon_rate = sums.map{|b| b < (lines.count.to_f/2) ? 1 : 0}.join.to_i(2)
 
 pp "Consumption: #{gamma_rate * epsilon_rate}"
 
 
 def find_most_common(byte_array, position)
-  zeros = 0
-  ones = 0
-  byte_array.each { |byte| byte[position] == 1 ? (ones += 1) : (zeros += 1)}
-
-  ones >= zeros ? 1 : 0
-  # byte_array.map { |byte| byte[position]}.reduce(:+) >= (byte_array.length/2) ? 1 : 0
+  byte_array.map { |byte| byte[position]}.reduce(:+) >= (byte_array.length.to_f/2) ? 1 : 0
 end
 
 def find_least_common(byte_array, position)
-  zeros = 0
-  ones = 0
-  byte_array.each { |byte| byte[position] == 1 ? (ones += 1) : (zeros += 1)}
-
-  ones < zeros ? 1 : 0
-  # byte_array.map { |byte| byte[position]}.reduce(:+) <= (byte_array.length/2) ? 1 : 0
+  byte_array.map { |byte| byte[position]}.reduce(:+) >= (byte_array.length.to_f/2) ? 0 : 1
 end
 
 
