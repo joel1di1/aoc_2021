@@ -20,27 +20,20 @@ pp "Consumption: #{gamma_rate * epsilon_rate}"
 
 
 def find_most_common(byte_array, position)
-  pp "find_most_common, position: #{position}"
   zeros = 0
   ones = 0
   byte_array.each { |byte| byte[position] == 1 ? (ones += 1) : (zeros += 1)}
 
-  pp "found #{ones} ones, #{zeros} zeros"
-  pp "returning #{ones >= zeros ? 1 : 0}"
   ones >= zeros ? 1 : 0
   # byte_array.map { |byte| byte[position]}.reduce(:+) >= (byte_array.length/2) ? 1 : 0
 end
 
 def find_least_common(byte_array, position)
-  pp "find_most_common, position: #{position}"
   zeros = 0
   ones = 0
   byte_array.each { |byte| byte[position] == 1 ? (ones += 1) : (zeros += 1)}
 
-  pp "found #{ones} ones, #{zeros} zeros"
-  pp "returning #{ones < zeros ? 1 : 0}"
   ones < zeros ? 1 : 0
-
   # byte_array.map { |byte| byte[position]}.reduce(:+) <= (byte_array.length/2) ? 1 : 0
 end
 
