@@ -1,3 +1,7 @@
+#  ❯ bundle exec ruby lib/day4.rb                                                                       [16:57:07]
+# First winner is 51, score: 11536
+# last winner is 87, score: 1284
+
 require 'readline'
 require 'pry'
 
@@ -98,7 +102,7 @@ first_winner = nil
 already_wins = []
 
 draw_numbers.each do |draw|
-  puts "-- DRAW #{draw}"
+  # puts "-- DRAW #{draw}"
   new_winners = boards.map{|board| board.mark!(draw) }.compact
   # puts "found winners: #{new_winners}"
   if first_winner.nil? && !new_winners.empty?
@@ -112,7 +116,7 @@ draw_numbers.each do |draw|
     win_draw = draw
     break if no_wins.length == 0
   end
-  puts "no wins: #{no_wins}"
+  # puts "no wins: #{no_wins}"
 end
 
 puts "last winner is #{last_winner}, score: #{last_winner.score}"
