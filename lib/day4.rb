@@ -3,7 +3,7 @@
 # last winner is 87, score: 1284
 
 require 'readline'
-require 'pry'
+require 'byebug'
 
 class Cell
   attr_reader :number
