@@ -33,7 +33,10 @@ end
 
 class Board
   attr_reader :index
+  attr_reader :won
+
   def initialize(numbers, index)
+    @won = false
     @index = index
     @rows = []
     @cols = []
@@ -41,7 +44,7 @@ class Board
     @board = numbers.map.with_index do |row, i|
       row.map.with_index do |num, j|
         row = @rows[i] || (@rows[i] = [])
-        col = @cols[i] || (@cols[i] = [])
+        col = @cols[j] || (@cols[j] = [])
         cell = Cell.new(num, row, col)
         @cell_by_number[num] = cell
         row << cell
@@ -56,16 +59,20 @@ class Board
   end
 
   def mark!(number)
+    return if @won
     cell = @cell_by_number[number]
     return if cell.nil?
 
     cell.mark!
-    return self if cell.row.all? {|c| c.marked?} || cell.col.all? {|c| c.marked?}
+    if cell.row.all? {|c| c.marked?} || cell.col.all? {|c| c.marked?}
+      @won = true
+      return self
+    end
     nil
   end
 
   def score
-    @rows.map{|row| row.map{|cell| cell.marked? ? cell.number : 0 }.reduce(:+)}.reduce(:+)
+    @rows.map{|row| row.map{|cell| cell.marked? ? 0 : cell.number }.reduce(:+)}.reduce(:+)
   end
 
   def to_s
@@ -84,16 +91,6 @@ lines[2..-1].each_slice(6).with_index do |slice, index|
   boards << Board.new(slice[0, 5].map{|raw| raw.split().map(&:to_i)}, index)
 end
 
-def calculate_score(board, mark)
-  score = 0
-  (0..4).each do |i|
-    (0..4).each do |j|
-      score += board[i][j] if mark[i][j].zero?
-    end
-  end
-  score
-end
-
 no_wins = (0..boards.length - 1).to_a
 
 last_winner = nil
@@ -104,10 +101,11 @@ already_wins = []
 draw_numbers.each do |draw|
   # puts "-- DRAW #{draw}"
   new_winners = boards.map{|board| board.mark!(draw) }.compact
-  # puts "found winners: #{new_winners}"
+  # puts "Boards: #{boards.map(&:to_s).join("\n")}"
+  # puts "found winners: #{new_winners.map(&:index)}"
   if first_winner.nil? && !new_winners.empty?
     first_winner = new_winners.first
-    puts "First winner is #{first_winner}, score: #{first_winner.score}"
+    puts "First winner is #{first_winner}\nscore: #{first_winner.score * draw}"
   end
   if !new_winners.empty?
     last_winner = new_winners.last
@@ -119,4 +117,4 @@ draw_numbers.each do |draw|
   # puts "no wins: #{no_wins}"
 end
 
-puts "last winner is #{last_winner}, score: #{last_winner.score}"
+puts "last winner is #{last_winner}\nscore: #{last_winner.score * win_draw}"
