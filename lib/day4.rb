@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #  ❯ bundle exec ruby lib/day4.rb                                                                       [16:57:07]
 # First winner is 51, score: 11536
 # last winner is 87, score: 1284
@@ -63,7 +65,7 @@ class Board
     return if cell.nil?
 
     cell.mark!
-    if cell.row.all? { |c| c.marked? } || cell.col.all? { |c| c.marked? }
+    if cell.row.all?(&:marked?) || cell.col.all?(&:marked?)
       @won = true
       return self
     end
@@ -76,7 +78,7 @@ class Board
 
   def to_s
     "BOARD ##{@index}\n" +
-      @board.map { |row| row.map { |cell| cell.to_s }.join(' ') }.join("\n")
+      @board.map { |row| row.map(&:to_s).join(' ') }.join("\n")
   end
 end
 
@@ -85,7 +87,7 @@ lines = File.readlines('inputs/day4.txt')
 draw_numbers = lines[0].split(',').map(&:to_i)
 
 boards = []
-lines[2..-1].each_slice(6).with_index do |slice, index|
+lines[2..].each_slice(6).with_index do |slice, index|
   boards << Board.new(slice[0, 5].map { |raw| raw.split.map(&:to_i) }, index)
 end
 
@@ -111,7 +113,7 @@ draw_numbers.each do |draw|
   no_wins -= new_winners.map(&:index)
   already_wins += new_winners.map(&:index)
   win_draw = draw
-  break if no_wins.length == 0
+  break if no_wins.length.zero?
   # puts "no wins: #{no_wins}"
 end
 

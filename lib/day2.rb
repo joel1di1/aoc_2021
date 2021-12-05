@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'readline'
 
 lines = File.readlines('inputs/day2.txt')
