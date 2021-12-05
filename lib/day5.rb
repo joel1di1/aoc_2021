@@ -14,33 +14,33 @@ class Point
   def ==(other)
     x == other.x && y == other.y
   end
+
+  def next_to(target)
+    Point.new(next_value(x, target.x), next_value(y, target.y))
+  end
+
+  private
+  def next_value(current, target)
+    return current if current == target
+    current + (target > current ? 1 : -1)
+  end
 end
 
 class Line
-  attr_reader :x1, :y1, :x2, :y2
+  attr_reader :start_point, :end_point
 
   def initialize(x1, y1, x2, y2)
-    @x1 = x1
-    @y1 = y1
-    @x2 = x2
-    @y2 = y2
+    @start_point = Point.new(x1, y1)
+    @end_point = Point.new(x2, y2)
   end
 
   def points
-    p = Point.new(x1, y1)
-    end_point = Point.new(x2, y2)
+    current = start_point
+    points = [current]
 
-    points = []
-    points << p
-
-    while p != end_point
-      new_x = p.x
-      new_x += (end_point.x > p.x ? 1 : -1) if end_point.x != p.x
-      new_y = p.y
-      new_y += (end_point.y > p.y ? 1 : -1) if end_point.y != p.y
-
-      p = Point.new(new_x, new_y)
-      points << p
+    while current != end_point
+      current = current.next_to(end_point)
+      points << current
     end
     points
   end
@@ -52,7 +52,6 @@ class Line
     end
   end
 end
-
 
 max_x, max_y = 0, 0
 
