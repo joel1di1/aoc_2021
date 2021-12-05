@@ -10,6 +10,10 @@ class Point
     @x = x
     @y = y
   end
+
+  def ==(other)
+    x == other.x && y == other.y
+  end
 end
 
 class Line
@@ -23,15 +27,22 @@ class Line
   end
 
   def points
-    return [] if x1 != x2 && y1 != y2
+    p = Point.new(x1, y1)
+    end_point = Point.new(x2, y2)
 
-    if x1 != x2
-      xs = [x1, x2]
-      (xs.min..xs.max).map { |x| Point.new(x,y1) }
-    else
-      ys = [y1, y2]
-      (ys.min..ys.max).map { |y| Point.new(x1,y) }
+    points = []
+    points << p
+
+    while p != end_point
+      new_x = p.x
+      new_x += (end_point.x > p.x ? 1 : -1) if end_point.x != p.x
+      new_y = p.y
+      new_y += (end_point.y > p.y ? 1 : -1) if end_point.y != p.y
+
+      p = Point.new(new_x, new_y)
+      points << p
     end
+    points
   end
 
   def draw_on(diagram)
@@ -41,6 +52,7 @@ class Line
     end
   end
 end
+
 
 max_x, max_y = 0, 0
 
