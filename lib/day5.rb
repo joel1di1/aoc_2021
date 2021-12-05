@@ -6,7 +6,7 @@ content = File.readlines('inputs/day5.txt')
 class Point
   attr_reader :x, :y
 
-  def initialize(x,y)
+  def initialize(x, y)
     @x = x
     @y = y
   end
@@ -20,8 +20,10 @@ class Point
   end
 
   private
+
   def next_value(current, target)
     return current if current == target
+
     current + (target > current ? 1 : -1)
   end
 end
@@ -53,10 +55,11 @@ class Line
   end
 end
 
-max_x, max_y = 0, 0
+max_x = 0
+max_y = 0
 
 lines = content.map do |line|
-  a  = line.split(' ');
+  a = line.split(' ')
   x1, y1 = a.first.split(',').map(&:to_i)
   x2, y2 = a.last.split(',').map(&:to_i)
   max_x = [max_x, x1, x2].max
@@ -68,5 +71,4 @@ diagram = Array.new(max_x) { Array.new(max_y, 0) }
 
 lines.each { |line| line.draw_on(diagram) }
 
-pp diagram.flatten.compact.select{|i| i >= 2}.count
-
+pp diagram.flatten.compact.select { |i| i >= 2 }.count

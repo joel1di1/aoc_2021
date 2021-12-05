@@ -6,9 +6,7 @@ require 'readline'
 require 'byebug'
 
 class Cell
-  attr_reader :number
-  attr_reader :row
-  attr_reader :col
+  attr_reader :number, :row, :col
 
   def initialize(number, row, col)
     @number = number
@@ -26,14 +24,14 @@ class Cell
   end
 
   def to_s
-    return "\033[32m%02d\033[0m" % @number if marked?
-    "%02d" % @number
+    return format("\033[32m%02d\033[0m", @number) if marked?
+
+    format('%02d', @number)
   end
 end
 
 class Board
-  attr_reader :index
-  attr_reader :won
+  attr_reader :index, :won
 
   def initialize(numbers, index)
     @won = false
@@ -60,11 +58,12 @@ class Board
 
   def mark!(number)
     return if @won
+
     cell = @cell_by_number[number]
     return if cell.nil?
 
     cell.mark!
-    if cell.row.all? {|c| c.marked?} || cell.col.all? {|c| c.marked?}
+    if cell.row.all? { |c| c.marked? } || cell.col.all? { |c| c.marked? }
       @won = true
       return self
     end
@@ -72,15 +71,14 @@ class Board
   end
 
   def score
-    @rows.map{|row| row.map{|cell| cell.marked? ? 0 : cell.number }.reduce(:+)}.reduce(:+)
+    @rows.map { |row| row.map { |cell| cell.marked? ? 0 : cell.number }.reduce(:+) }.reduce(:+)
   end
 
   def to_s
     "BOARD ##{@index}\n" +
-      @board.map{|row| row.map{|cell| cell.to_s}.join(' ') }.join("\n")
+      @board.map { |row| row.map { |cell| cell.to_s }.join(' ') }.join("\n")
   end
 end
-
 
 lines = File.readlines('inputs/day4.txt')
 
@@ -88,7 +86,7 @@ draw_numbers = lines[0].split(',').map(&:to_i)
 
 boards = []
 lines[2..-1].each_slice(6).with_index do |slice, index|
-  boards << Board.new(slice[0, 5].map{|raw| raw.split().map(&:to_i)}, index)
+  boards << Board.new(slice[0, 5].map { |raw| raw.split.map(&:to_i) }, index)
 end
 
 no_wins = (0..boards.length - 1).to_a
@@ -100,20 +98,20 @@ already_wins = []
 
 draw_numbers.each do |draw|
   # puts "-- DRAW #{draw}"
-  new_winners = boards.map{|board| board.mark!(draw) }.compact
+  new_winners = boards.map { |board| board.mark!(draw) }.compact
   # puts "Boards: #{boards.map(&:to_s).join("\n")}"
   # puts "found winners: #{new_winners.map(&:index)}"
   if first_winner.nil? && !new_winners.empty?
     first_winner = new_winners.first
     puts "First winner is #{first_winner}\nscore: #{first_winner.score * draw}"
   end
-  if !new_winners.empty?
-    last_winner = new_winners.last
-    no_wins = no_wins - new_winners.map(&:index)
-    already_wins += new_winners.map(&:index)
-    win_draw = draw
-    break if no_wins.length == 0
-  end
+  next if new_winners.empty?
+
+  last_winner = new_winners.last
+  no_wins -= new_winners.map(&:index)
+  already_wins += new_winners.map(&:index)
+  win_draw = draw
+  break if no_wins.length == 0
   # puts "no wins: #{no_wins}"
 end
 

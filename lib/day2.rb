@@ -2,7 +2,10 @@ require 'readline'
 
 lines = File.readlines('inputs/day2.txt')
 
-commands = lines.map{|line| c = line.split(' '); [c[0], c[1].to_i] }
+commands = lines.map do |line|
+  c = line.split(' ')
+  [c[0], c[1].to_i]
+end
 
 depth = 0
 horizontal = 0
