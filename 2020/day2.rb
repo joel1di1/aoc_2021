@@ -24,7 +24,7 @@ puts "Part 1: #{selected_lines.count}"
 
 selected_lines = lines.select do |line|
   char, position1, position2, password = extract_infos(line)
-  [position1, position2].map{|p| password[p - 1]}.select { |c| c == char }.count == 1
+  [position1, position2].map { |p| password[p - 1] }.select { |c| c == char }.count == 1
 end
 
 puts "Part 2: #{selected_lines.count}"

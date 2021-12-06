@@ -28,11 +28,9 @@ numbers.each_with_index do |n1, i|
       break if n3.nil?
       break if n3 + n2 + n1 > 2020
 
-      puts(n1 * n2 * n3) if n1 + n2 + n3== 2020
+      puts(n1 * n2 * n3) if n1 + n2 + n3 == 2020
       j += 1
     end
-    i+=1
+    i += 1
   end
 end
-
-
