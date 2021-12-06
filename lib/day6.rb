@@ -33,7 +33,7 @@ input = [4, 2, 4, 1, 5, 1, 2, 2, 4, 1, 1, 2, 2, 2, 4, 4, 1, 2, 1, 1, 4, 1, 2, 1,
 process 80, input
 
 
-# day 2
+# part 2
 
 def process_fast(input, nb_days)
   lanterns = input.tally
