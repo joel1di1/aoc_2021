@@ -30,8 +30,7 @@ total = [[1, 1],
  [5, 1],
  [7, 1],
  [1, 2]].map do |right, down|
-  count_trees('day3.txt', right , down)
+  count_trees('day3.txt', right, down)
 end.reduce(:*)
-
 
 puts total
