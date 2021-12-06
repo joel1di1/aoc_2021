@@ -6,15 +6,32 @@ def build_forest(file)
   File.readlines(file).map{|l| l.strip.chars }
 end
 
-def process(file)
+def count_trees(file, right, down = 1)
   forest = build_forest(file)
   width = forest.first.size
-  path = (0..forest.size - 1).map do |i|
-    y = (3 * i) % width
-    forest[i][y]
+  x = 0
+  y = 0
+  path = []
+  while x < forest.size
+    path << forest[x][y]
+    x += down
+    y = (y + right) % width
   end
-  puts "#{file}: #{path.select{ |p| p == '#' }.count}"
+  trees_sum = path.select{ |p| p == '#' }.count
+  puts "#{file}: #{trees_sum}"
+  trees_sum
 end
 
-process('day3_sample.txt')
-process('day3.txt')
+count_trees('day3_sample.txt', 3, 1)
+count_trees('day3.txt', 3, 1)
+
+total = [[1, 1],
+ [3, 1],
+ [5, 1],
+ [7, 1],
+ [1, 2]].map do |right, down|
+  count_trees('day3.txt', right , down)
+end.reduce(:*)
+
+
+puts total
