@@ -2,7 +2,7 @@
 
 require 'readline'
 
-numbers = File.readlines('inputs/day_1.txt').map(&:to_i)
+numbers = File.readlines('inputs/day1.txt').map(&:to_i)
 
 # 1
 pp (1..numbers.size - 1).map { |i| numbers[i] > numbers[i - 1] ? 1 : 0 }.reduce(:+)
