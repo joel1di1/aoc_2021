@@ -7,29 +7,33 @@ def read_passports(file)
   content.split("\n\n").map { |group| group.split.map { |e| e.split(':') }.to_h }
 end
 
+def invalid_date(value, min, max)
+  !value[/^\d{4}$/] || value.to_i < min || value.to_i > max
+end
+
+def invalid_hgt(hgt)
+  return true unless hgt[/^\d+(cm|in)$/]
+  return true if hgt[/^\d+cm$/] && (hgt.to_i < 150 || hgt.to_i > 193)
+  return true if hgt[/^\d+in$/] && (hgt.to_i < 59 || hgt.to_i > 76)
+end
+
 def valid?(passport)
   passport.delete 'cid'
   return false if passport.size != 7
 
-  return false if !passport['byr'][/^\d{4}$/] || passport['byr'].to_i < 1920 || passport['byr'].to_i > 2002
-  return false if !passport['iyr'][/^\d{4}$/] || passport['iyr'].to_i < 2010 || passport['iyr'].to_i > 2020
-  return false if !passport['eyr'][/^\d{4}$/] || passport['eyr'].to_i < 2020 || passport['eyr'].to_i > 2030
-  return false if !passport['hgt'][/^\d+(cm|in)$/]
-  return false if passport['hgt'][/^\d+cm$/] && (passport['hgt'].to_i < 150 || passport['hgt'].to_i > 193)
-  return false if passport['hgt'][/^\d+in$/] && (passport['hgt'].to_i < 59 || passport['hgt'].to_i > 76)
-  return false if !passport['hcl'][/^#(\d|[a-f]){6}$/]
-  return false if !%w(amb blu brn gry grn hzl oth).include?(passport['ecl'])
-  return false if !passport['pid'][/^\d{9}$/]
+  return false if invalid_date(passport['byr'], 1920, 2002)
+  return false if invalid_date(passport['iyr'], 2010, 2020)
+  return false if invalid_date(passport['eyr'], 2020, 2030)
+  return false if invalid_hgt(passport['hgt'])
+  return false unless passport['hcl'][/^#(\d|[a-f]){6}$/]
+  return false unless %w[amb blu brn gry grn hzl oth].include?(passport['ecl'])
+  return false unless passport['pid'][/^\d{9}$/]
 
   true
 end
 
 def count_valid(passports)
-  passports.select do |passport|
-    v = valid?(passport)
-    puts passport unless v
-    v
-  end.count
+  passports.select { |passport| valid?(passport) }.count
 end
 
 def process(file)
