@@ -16,13 +16,19 @@ class BagType
     @contained_by_ << other
   end
 
-  # def contains!(other)
-  #   @contains_ << other
-  # end
-  #
-  # def contains
-  #   @contains_
-  # end
+  def contains!(other, number)
+    @contains_ << [other, number]
+  end
+
+  def contains
+    @contains_
+  end
+
+  def count_capacity
+    return 0 if @contains_.empty?
+
+    @contains_.map { |_c, number| number }.sum + @contains_.map { |c, number| c.count_capacity * number }.sum
+  end
 
   def contained_by
     @contained_by_
@@ -37,7 +43,7 @@ class BagType
   def initialize(color)
     @color = color
     @contained_by_ = Set.new
-    # @contains_ = Set.new
+    @contains_ = []
   end
 end
 
@@ -47,11 +53,11 @@ rules.each do |rule|
   bag = BagType.get(split.first.gsub(/ bags?/, ''))
   next if rule[/contain no other bags/]
 
-  contained_colors = split[1].scan(/\d+\s(\w+ \w+) bag/).flatten
-  contained_colors.each do |color|
+  contained_colors = split[1].scan(/(\d+)\s(\w+ \w+) bag/).flatten
+  Hash[*contained_colors.reverse].each do |color, number|
     contained_bag = BagType.get(color)
     contained_bag.contained_by!(bag)
-    # bag.contains!(contained_bag)
+    bag.contains!(contained_bag, number.to_i)
   end
 end
 
@@ -63,5 +69,6 @@ def rec_valids(valids)
 end
 
 valids = rec_valids(Set.new(BagType.get('shiny gold').contained_by))
-
 puts valids.flatten.count
+
+puts BagType.get('shiny gold').count_capacity
