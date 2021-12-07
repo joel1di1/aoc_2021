@@ -14,4 +14,14 @@ end
 
 passes = File.readlines('day5.txt')
 
-puts passes.map { |pass| seat_id(pass) }.max
+seat_ids = passes.map { |pass| seat_id(pass) }
+puts seat_ids.max
+
+presences = []
+seat_ids.each { |seat_id| presences[seat_id] = 1 }
+
+available_seats = (1..(128 * 8 - 1)).select do |id|
+  presences[id].nil? && presences[id - 1] && presences[id + 1]
+end
+
+pp available_seats
