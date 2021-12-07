@@ -5,33 +5,28 @@ require 'readline'
 require 'set'
 
 class BagType
-  ALL_BAG_TYPES = {}
-  attr_accessor :color
-
-  def self.get(color)
-    ALL_BAG_TYPES[color] || ALL_BAG_TYPES[color] = BagType.new(color)
+  def self.all_bags
+    @all_bags ||= {}
   end
 
+  def self.get(color)
+    all_bags[color] || all_bags[color] = BagType.new(color)
+  end
+
+  attr_reader :color, :contains, :contained_by
+
   def contained_by!(other)
-    @contained_by_ << other
+    @contained_by << other
   end
 
   def contains!(other, number)
-    @contains_ << [other, number]
-  end
-
-  def contains
-    @contains_
+    @contains << [other, number]
   end
 
   def count_capacity
-    return 0 if @contains_.empty?
+    return 0 if @contains.empty?
 
-    @contains_.map { |_c, number| number }.sum + @contains_.map { |c, number| c.count_capacity * number }.sum
-  end
-
-  def contained_by
-    @contained_by_
+    @contains.map { |_c, number| number }.sum + @contains.map { |c, number| c.count_capacity * number }.sum
   end
 
   def to_s
@@ -42,8 +37,8 @@ class BagType
 
   def initialize(color)
     @color = color
-    @contained_by_ = Set.new
-    @contains_ = []
+    @contained_by = Set.new
+    @contains = []
   end
 end
 
