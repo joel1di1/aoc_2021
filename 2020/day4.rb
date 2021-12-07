@@ -42,4 +42,3 @@ end
 
 process('day4_sample.txt')
 process('day4.txt')
-
