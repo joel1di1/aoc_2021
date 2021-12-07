@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-#  ❯ bundle exec ruby lib/day4.rb                                                                       [16:57:07]
+#  ❯ bundle exec ruby 2021/day4.rb                                                                       [16:57:07]
 # First winner is 51, score: 11536
 # last winner is 87, score: 1284
 
