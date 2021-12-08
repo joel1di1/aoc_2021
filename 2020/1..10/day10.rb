@@ -34,8 +34,12 @@ def valid?(numbers)
   true
 end
 
+@hits = 0
 def count_ways(numbers, cache = {})
-  return cache[numbers] if cache[numbers]
+  if cache[numbers]
+    @hits += 1
+    return cache[numbers]
+  end
 
   res = if numbers.size < 3
           1
@@ -55,7 +59,12 @@ end
 sample_result = part2('day10_sample.txt')
 expected = 19208
 
+puts "hits: #{@hits}"
+@hits = 0
+
 puts "\n\n\nSample Result: #{sample_result}"
 raise "expected: #{expected}, actual: #{sample_result}" unless sample_result == expected
 
 puts "Result: #{part2('day10.txt')}"
+puts "hits: #{@hits}"
+@hits = 0
