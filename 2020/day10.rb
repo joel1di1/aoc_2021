@@ -34,19 +34,18 @@ def valid?(numbers)
   true
 end
 
-@iter = 0
+def count_ways(numbers, cache = {})
+  return cache[numbers] if cache[numbers]
 
-def count_ways(numbers, sols = Set.new)
-  @iter += 1
-  puts "iter: #{@iter}, sols: #{sols.size}, numbers: #{numbers} " if @iter % 100000 == 0
-
-  sols << numbers
-  (1..numbers.size - 2).map do |index|
-    if numbers[index + 1] - numbers[index - 1] <= 3
-      sub = numbers - [numbers[index]]
-      sols.include?(sub) ? nil : sub
-    end
-  end.compact.map { |numbers| count_ways(numbers, sols) }.sum + 1
+  res = if numbers.size < 3
+          1
+        elsif numbers[2] - numbers[0] <= 3
+          count_ways(numbers[1..], cache) + count_ways(numbers - [numbers[1]], cache)
+        else
+          count_ways(numbers[1..], cache)
+        end
+  cache[numbers] = res
+  res
 end
 
 def part2(file)
