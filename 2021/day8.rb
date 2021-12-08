@@ -33,16 +33,13 @@ def decode(codes)
 end
 
 def process(file)
-  lines = File.readlines(file).map do |l|
+  sum = File.readlines(file).map do |l|
     split = l.split(' | ')
-    [split[0].split.map { |s| s.chars.sort.join }, split[1].split.map { |s| s.chars.sort.join }]
-  end
+    codes = split[0].split.map { |s| s.chars.sort.join }
+    digits = split[1].split.map { |s| s.chars.sort.join }
 
-  sum = lines.map do |codes, digits|
     table = decode(codes)
-    digits.map do |d|
-      [1, 4, 7, 8].include?(table[d]) ? 1 : 0
-    end.sum
+    digits.map { |d| table[d].to_s}.join.to_i
   end.sum
 
   puts "#{file}: #{sum}"
