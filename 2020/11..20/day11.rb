@@ -8,16 +8,28 @@ def different?(previous_grid, grid)
   previous_grid.flatten != grid.flatten
 end
 
-def neighbours_coords(i, j, i_max, j_max)
-  [[i - 1, j - 1], [i - 1, j], [i -1, j + 1],
-   [i, j - 1], [i, j + 1],
-   [i + 1, j - 1], [i + 1, j], [i + 1, j + 1]].select do |i, j|
-    i >= 0 && j >= 0 && i < i_max && j < j_max
-  end
-end
-
 def neighbours(i, j, grid)
-  neighbours_coords(i, j, grid.size, grid.first.size).map { |i, j| grid[i][j] }
+  coords = (-1..1).map { |i| (-1..1).map { |j| [i, j] } }.reduce([]) do |arr, l|
+    arr += l
+  end
+
+  coords.delete_at 4
+
+  coords.map do |x, y|
+    ni = i
+    nj = j
+    current = nil
+    loop do
+      ni += x
+      nj += y
+      break if ni.negative? || nj.negative? || ni >= grid.size || nj >= grid.first.size
+
+
+      current = grid[ni][nj]
+      break if current != '.'
+    end
+    current
+  end
 end
 
 def change(grid)
@@ -27,7 +39,9 @@ def change(grid)
       when 'L'
         neighbours(i, j, grid).count('#').zero? ? '#' : 'L'
       when '#'
-        neighbours(i, j, grid).count('#') >= 4 ? 'L' : '#'
+        neighbours(i, j, grid).count('#') >= 5 ? 'L' : '#'
+      else
+        '.'
       end
     end
   end
@@ -37,10 +51,16 @@ def build(file)
   File.readlines(file).map { |line| line.strip.chars }
 end
 
+def display(grid)
+  puts "\n"
+  puts grid.map { |r| r.join }.join("\n")
+end
+
 def process(file)
   previous_grid = []
   grid = build(file)
   while different?(previous_grid, grid)
+    # display(grid)
     next_grid = change(grid)
     previous_grid = grid
     grid = next_grid
@@ -49,8 +69,9 @@ def process(file)
 end
 
 sample_result = process('day11_sample.txt')
-expected = 37
+expected = 26
 
 puts "Sample Result: #{sample_result}"
 raise "expected: #{expected}, actual: #{sample_result}" unless sample_result == expected
+
 puts "Result: #{process('day11.txt')}"
