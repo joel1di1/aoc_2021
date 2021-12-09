@@ -4,22 +4,22 @@ require 'readline'
 require 'byebug'
 require 'set'
 
-def bassin(grid, i, j, current_bassin = Set.new)
-  return if current_bassin.include? [i, j]
-  return if grid[i][j] == 9
-
-  current_bassin << [i, j]
-  coords = [[i, j-1], [i, j+1], [i-1,j], [i+1,j]].select do |x, y|
+def neighbors(grid, i, j)
+  [[i, j - 1], [i, j + 1], [i - 1, j], [i + 1, j], [i, j]].select do |x, y|
     x >= 0 && y >= 0 && x <= grid.size - 1 && y <= grid.first.size - 1
   end
+end
+
+def bassin(grid, i, j, current_bassin = Set.new)
+  current_bassin << [i, j]
+  coords = neighbors(grid, i, j)
 
   coords.each do |x, y|
     next if current_bassin.include? [x, y]
     next if grid[x][y] == 9
+    next if grid[i][j] >= grid[x][y]
 
-    if grid[i][j] < grid[x][y]
-      bassin(grid, x, y, current_bassin)
-    end
+    bassin(grid, x, y, current_bassin)
   end
   current_bassin
 end
@@ -30,13 +30,8 @@ def process(file)
   low_point_indexes = []
   (0..grid.size - 1).each do |i|
     (0..grid.first.size - 1).each do |j|
-      coords = (-1..1).map { |x| (-1..1).map { |y| [i + x, j + y] } }.reduce(:+).select do |x, y|
-        x >= 0 && y >= 0 && x <= grid.size - 1 && y <= grid.first.size - 1
-      end
-
-      min = coords.map { |x, y| grid[x][y] }.min
+      min = neighbors(grid, i, j).map { |x, y| grid[x][y] }.min
       low_point_indexes << [i, j] if grid[i][j] == min
-      # puts "low_point_indexes: #{low_point_indexes}"
     end
   end
 
