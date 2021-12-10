@@ -7,7 +7,6 @@ require 'set'
 def process(file)
   lines = File.readlines(file)
 
-  mask = nil
   one_mask = nil
   zero_mask = nil
   mem = []
@@ -20,8 +19,8 @@ def process(file)
     when /mem\[(\d+)\] = (\d+)/
       index = Regexp.last_match(1).to_i
       value = Regexp.last_match(2).to_i
-      value = value | one_mask
-      value = value & zero_mask
+      value |= one_mask
+      value &= zero_mask
       mem[index] = value
     end
   end
