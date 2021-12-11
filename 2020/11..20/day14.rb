@@ -62,13 +62,9 @@ def process2(file)
     when /mem\[(\d+)\] = (\d+)/
       address = Regexp.last_match(1).to_i & zero_mask
       value = Regexp.last_match(2).to_i
-      puts "\naddress : #{address.to_s(2).rjust(36, '0')} (decimal: #{address})"
       address |= one_mask
-      puts "a masked: #{address.to_s(2).rjust(36, '0')} (decimal: #{address})"
-      puts "mask    : #{floating_mask}"
       addresses = compute_indexes(address, floating_mask, x_indexes)
       addresses.each do |address|
-        puts "new ad: #{address.to_s(2).rjust(36, '0')} (decimal: #{address})"
         mem["#{address}"] = value
       end
     end
