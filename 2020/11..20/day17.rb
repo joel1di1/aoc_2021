@@ -53,8 +53,10 @@ class Cube
     (-1..1).map do |x|
       (-1..1).map do |y|
         (-1..1).map do |z|
-          n_coords = { x: @coords[:x] + x, y: @coords[:y] + y, z: @coords[:z] + z }
-          UNIVERSE.at(n_coords, create: create) if n_coords != coords
+          (-1..1).map do |w|
+            n_coords = { x: @coords[:x] + x, y: @coords[:y] + y, z: @coords[:z] + z, w: @coords[:w] + w }
+            UNIVERSE.at(n_coords, create: create) if n_coords != coords
+          end
         end
       end
     end.flatten.compact
@@ -89,7 +91,7 @@ def process(file)
   UNIVERSE.clear
   File.readlines(file).map.with_index do |line, x|
     line.strip.chars.each_with_index do |c, y|
-      UNIVERSE.at({ x: x, y: y, z: 1 }, active: c == '#', create: true)
+      UNIVERSE.at({ x: x, y: y, z: 0, w: 0 }, active: c == '#', create: true)
     end
   end
 
