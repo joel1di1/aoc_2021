@@ -4,6 +4,14 @@ require 'readline'
 require 'byebug'
 require 'set'
 
+def assert_eq(expected, actual)
+  raise "Expected #{expected} but received #{actual}" if expected != actual
+end
+
+def assert(actual)
+  raise "Expected truthy but received #{actual}" unless actual
+end
+
 class Cave
   attr_reader :name, :neighbors
 
@@ -25,7 +33,7 @@ class Cave
     @neighbors << other
   end
 
-  def end?
+  def ends?
     name == 'end'
   end
 
@@ -34,21 +42,36 @@ class Cave
   end
 end
 
+assert_eq 'my_name', Cave.new('my_name').name
+assert Cave.new('end').ends?
+assert !Cave.new('ab').ends?
+assert !Cave.new('ab').big?
+assert Cave.new('AB').big?
+assert Cave.new('A').big?
+
 class Path
-  def initialize(*caves)
+  def initialize(*caves, joker_used: false)
     @caves = caves.flatten.freeze
-    self
+    @joker_used = joker_used
   end
 
   def self_and_next_paths
-    last_cave = @caves.last
-    return [self] if last_cave.end?
+    return [self] if @caves.last.ends?
 
-    next_paths = last_cave.neighbors.map do |n|
-      Path.new(@caves.to_a + [n]) if can_revisit?(n)
-    end.compact
-    all_next_path = next_paths.map(&:self_and_next_paths).flatten
-    [self] + all_next_path
+    [self] + next_paths
+  end
+
+  def next_paths
+    neighbors = @caves.last.neighbors
+    next_paths = neighbors.map do |next_cave|
+      if can_go_into?(next_cave)
+        Path.new(@caves.to_a + [next_cave], joker_used: @joker_used)
+      elsif !@joker_used && next_cave.name != 'start'
+        Path.new(@caves.to_a + [next_cave], joker_used: true)
+      end
+    end
+    next_paths.compact!
+    next_paths.map(&:self_and_next_paths).flatten
   end
 
   def to_s
@@ -60,13 +83,14 @@ class Path
   end
 
   def ends?
-    @caves.last.name == 'end'
+    @caves.last.ends?
   end
 
-  private
+  def can_go_into?(cave)
+    return true if cave.big?
+    return false if cave.name == 'start'
 
-  def can_revisit?(cave)
-    cave.big? || !@caves.include?(cave)
+    !@caves.include?(cave)
   end
 end
 
@@ -81,6 +105,23 @@ def read_caves(input)
   end
   caves
 end
+
+caves = read_caves(<<~TEXT)
+  start-A
+  A-end
+TEXT
+
+p = Path.new(caves['start'], caves['A'], caves['end'])
+assert p.ends?
+assert_eq [p], p.self_and_next_paths
+
+puts Path.new(caves['start']).self_and_next_paths
+assert_eq [p], p.self_and_next_paths
+
+p = Path.new(caves['start'], caves['A'])
+assert !p.can_go_into?(caves['start'])
+assert_eq 2, p.self_and_next_paths.count
+assert_eq 3, Path.new(caves['start']).self_and_next_paths.count
 
 def process(input)
   all_caves = read_caves(input)
