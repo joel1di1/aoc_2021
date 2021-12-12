@@ -55,13 +55,9 @@ class Path
     @joker_used = joker_used
   end
 
-  def self_and_next_paths
-    return [self] if @caves.last.ends?
+  def ending_paths
+    return [self] if ends?
 
-    [self] + next_paths
-  end
-
-  def next_paths
     neighbors = @caves.last.neighbors
     next_paths = neighbors.map do |next_cave|
       if can_go_into?(next_cave)
@@ -71,15 +67,11 @@ class Path
       end
     end
     next_paths.compact!
-    next_paths.map(&:self_and_next_paths).flatten
+    next_paths.map(&:ending_paths).flatten
   end
 
   def to_s
-    @caves.map(&:to_s).join(',')
-  end
-
-  def ==(other)
-    other.caves == caves
+    @to_s ||= @caves.map(&:to_s).join(',')
   end
 
   def ends?
@@ -106,44 +98,15 @@ def read_caves(input)
   caves
 end
 
-caves = read_caves(<<~TEXT)
-  start-A
-  A-end
-TEXT
-
-p = Path.new(caves['start'], caves['A'], caves['end'])
-assert p.ends?
-assert_eq [p], p.self_and_next_paths
-
-puts Path.new(caves['start']).self_and_next_paths
-assert_eq [p], p.self_and_next_paths
-
-p = Path.new(caves['start'], caves['A'])
-assert !p.can_go_into?(caves['start'])
-assert_eq 2, p.self_and_next_paths.count
-assert_eq 3, Path.new(caves['start']).self_and_next_paths.count
-
 def process(input)
   all_caves = read_caves(input)
 
-  path = Path.new(all_caves['start'])
-  paths = path.self_and_next_paths.flatten
-  paths = Set.new(paths).to_a.select(&:ends?)
+  paths = Path.new(all_caves['start']).ending_paths
 
-  paths = paths.map(&:to_s).uniq.sort
+  paths = paths.map(&:to_s).sort
   paths.each { |p| puts p }
   puts "count: #{paths.count}"
 end
-
-process(<<~TEXT)
-  start-A
-  start-b
-  A-c
-  A-b
-  b-d
-  A-end
-  b-end
-TEXT
 
 process(<<~TEXT)
   ma-start
