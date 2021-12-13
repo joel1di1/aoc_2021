@@ -4,10 +4,10 @@ require_relative '../../fwk'
 
 
 def evaluate(str)
-  26
+  eval(str)
 end
 
-assert_eq 26, evaluate('2 * 3')
-assert_eq 26, evaluate('2 * 3')
+assert_eq 6, evaluate('2 * 3')
+assert_eq 5, evaluate('2 + 3')
 
 `git add . && git commit -am 'green autocommit'`
