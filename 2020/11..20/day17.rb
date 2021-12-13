@@ -5,37 +5,37 @@ require_relative '../../fwk'
 class Universe
   def initialize(*cubes)
     clear
-    cubes.each { |cube| @grid[cube.coords] = cube }
+    cubes.each { |cube| @matrix[cube.coords] = cube }
   end
 
   def at(coords, active: false, create: false)
-    cube = @grid[coords]
+    cube = @matrix[coords]
     return cube if cube
 
-    @grid[coords] = Cube.new(coords, active: active) if create
+    @matrix[coords] = Cube.new(coords, active: active) if create
   end
 
   def clear
-    @grid = {}
+    @matrix = {}
   end
 
   def expand!
-    @grid.values.map { |cube| cube.neighbors(create: true) }
+    @matrix.values.map { |cube| cube.neighbors(create: true) }
   end
 
   def cycle
     expand!
-    next_active_cubes = @grid.values.map do |cube|
+    next_active_cubes = @matrix.values.map do |cube|
       active_neighbors = cube.neighbors.select(&:active?).count
       cube if (cube.active? && active_neighbors in 2..3) || (!cube.active? && active_neighbors == 3)
     end.compact!
 
-    @grid.values.map(&:deactivate!)
+    @matrix.values.map(&:deactivate!)
     next_active_cubes.map(&:activate!)
   end
 
   def cubes
-    @grid.values
+    @matrix.values
   end
 end
 
