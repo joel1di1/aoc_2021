@@ -88,9 +88,8 @@ def process(file)
   grid = Grid.new
   lines = File.readlines(file).map(&:strip)
 
-  lines.select { |l| l[/^\d+,\d/] }.each do |line|
-    x, y = line.scan(/^(\d+),(\d+)/)[0].map(&:to_i)
-    grid.mark(x, y)
+  all_dots = lines.select { |l| l[/^\d+,\d/] }.map do |line|
+    line.scan(/^(\d+),(\d+)/)[0].map(&:to_i)
   end
   folds =
     lines.select { |l| l[/fold along (x|y)=(\d+)/] }.map do |line|
@@ -98,17 +97,22 @@ def process(file)
       { axe: scan[0][0], index: scan[0][1].to_i }
     end
 
-  grid.fill_empty
-  grid.display('after fill _empty')
-  grid.apply_fold(folds.first)
-  grid.display('after first_fold')
-
-  # folds.each do |fold|
-  #   grid.apply_fold(fold)
-  #   break
-  # end
-
-  puts "\nSUM: #{grid.total}"
+  folds.each do |fold|
+    regroup_on = fold[:axe] == 'x' ? 1 : 0
+    check_on = fold[:axe] == 'x' ? 0 : 1
+    lines = all_dots.each_with_object([]) do |dot, lines|
+      lines[dot[regroup_on]] ||= []
+      lines[dot[regroup_on]] << dot
+    end
+    lines.select! { |line| line && line.size >= 2 }.each(&:sort!)
+    dots_to_remove = lines.each_with_object([]) do |dot_list, dots_to_remove|
+      dots_to_remove.concat(dot_list.select do |dot|
+        dot[check_on] < fold[:index] && dot_list.any? { |other| other != dot && (fold[:index] - other[check_on]).abs == (fold[:index] - dot[check_on]).abs }
+      end)
+    end
+    all_dots -= dots_to_remove
+    puts "after fold #{fold}, count: #{all_dots.count}"
+  end
 end
 
 # process('day13_sample.txt')
