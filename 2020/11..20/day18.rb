@@ -23,5 +23,6 @@ assert_eq 71, evaluate('1 + 2 * 3 + 4 * 5 + 6')
 assert_eq 26, evaluate('2 * 3 + (4 * 5)')
 assert_eq 49, evaluate('3 + (4 * 5) * 2 + 3')
 assert_eq 12240, evaluate('5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))')
+assert_eq 13632, evaluate('((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2')
 
 `git add . && git commit -am 'green autocommit'`
