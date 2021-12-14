@@ -69,9 +69,9 @@ def count_seq(sequence, rules, nb_iteration, cache = {})
   end
 end
 
-def part2(file, nb_iter)
+def part2(file, nb_iter, cache = {})
   rules, sequence = read_inputs(file)
-  counts = count_seq(sequence, rules, nb_iter)
+  counts = count_seq(sequence, rules, nb_iter, cache)
   res = counts.values.max - counts.values.min
   puts "[2] #{file} (#{nb_iter}): #{res}"
   res
@@ -85,12 +85,15 @@ assert_eq({ 'N' => 2, 'C' => 2 }, count_seq('CNCN', rules, 0))
 
 assert_eq({ 'N' => 1, 'C' => 2 }, count_seq('CN', rules, 1))
 
-rules, sequence = read_inputs('day14_sample.txt')
-assert_eq({ 'N' => 2, 'C' => 2, 'B' => 2, 'H' => 1 }, count_seq(sequence, rules, 1))
+# rules, sequence = read_inputs('day14_sample.txt')
+# assert_eq({ 'N' => 2, 'C' => 2, 'B' => 2, 'H' => 1 }, count_seq(sequence, rules, 1))
 
-assert_eq 1588, part2('day14_sample.txt', 10)
-assert_eq 2194, part2("day14.txt", 10)
-# part2("day14.txt", 40)
+# assert_eq 1588, part2('day14_sample.txt', 10)
+# assert_eq 2194, part2("day14.txt", 10)
+
+# cache = {}
+# part2("day14.txt", 10, cache)
+part2("day14_sample.txt", 4)
 
 puts 'YOUPI !!!'
 `git add . && git commit -am 'green autocommit'`
