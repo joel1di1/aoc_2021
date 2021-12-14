@@ -88,8 +88,8 @@ assert_eq({ 'N' => 1, 'C' => 2 }, count_seq('CN', rules, 1))
 rules, sequence = read_inputs('day14_sample.txt')
 assert_eq({ 'N' => 2, 'C' => 2, 'B' => 2, 'H' => 1 }, count_seq(sequence, rules, 1))
 
-part2('day14_sample.txt', 10)
-part2("day14.txt", 10)
+assert_eq 1588, part2('day14_sample.txt', 10)
+assert_eq 2194, part2("day14.txt", 10)
 # part2("day14.txt", 40)
 
 puts 'YOUPI !!!'
