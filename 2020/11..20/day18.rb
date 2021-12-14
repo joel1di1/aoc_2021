@@ -2,9 +2,8 @@
 
 require_relative '../../fwk'
 
-
 def evaluate(str)
-  str = str.gsub(/\s/,'')
+  str = str.gsub(/\s/, '')
   while str[/^((\d+)[+*](\d+))[+*]/]
     expr = Regexp.last_match[1]
     res = eval(expr)
@@ -17,5 +16,6 @@ end
 # assert_eq 5, evaluate('2 + 3')
 # assert_eq 10, evaluate('2 + 3 * 2')
 assert_eq 71, evaluate('1 + 2 * 3 + 4 * 5 + 6')
+assert_eq 26, evaluate('2 * 3 + (4 * 5)')
 
 `git add . && git commit -am 'green autocommit'`
