@@ -64,7 +64,9 @@ end
 def part2(file, nb_iter)
   rules, sequence = read_inputs(file)
   counts = count_seq(sequence, rules, nb_iter)
-  puts "#{counts.values.max - counts.values.min}"
+  res = counts.values.max - counts.values.min
+  puts "#{file} (#{nb_iter}): #{res}"
+  res
 end
 
 rules = { 'CN' => 'C' }
