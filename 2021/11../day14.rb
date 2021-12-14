@@ -25,9 +25,9 @@ end
 def process(file, nb_iter)
   rules, sequence = read_inputs(file)
 
-  puts "init: #{sequence}"
+  # puts "init: #{sequence}"
   nb_iter.times.with_index do |i|
-    puts "step #{i}"
+    # puts "step #{i}"
     sequence = step(sequence, rules)
     # puts "step#{i+1}: #{sequence}"
   end
