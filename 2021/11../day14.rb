@@ -39,12 +39,17 @@ end
 
 process("day14.txt")
 
-def count_seq(sequence, nb_iteration)
-  sequence.chars.tally
+def count_seq(sequence, rules, nb_iteration)
+  return sequence.chars.tally if sequence.size <= 1 || nb_iteration == 0
 end
 
-assert_eq({ 'N' => 1 }, count_seq('N', 0))
-assert_eq({ 'N' => 1, 'C' => 1 }, count_seq('CN', 0))
+rules = { 'CN' => 'C' }
+
+assert_eq({ 'N' => 1 }, count_seq('N', rules, 0))
+assert_eq({ 'N' => 1, 'C' => 1 }, count_seq('CN', rules, 0))
+assert_eq({ 'N' => 2, 'C' => 2 }, count_seq('CNCN', rules, 0))
+
+# assert_eq({ 'N' => 1, 'C' => 2 }, count_seq('CN', rules, 1))
 
 puts 'YOUPI !!!'
 `git add . && git commit -am 'green autocommit'`
