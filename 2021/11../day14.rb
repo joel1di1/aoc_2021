@@ -40,8 +40,7 @@ end
 process("day14.txt")
 
 def count_seq(sequence, rules, nb_iteration, cache = {})
-  cache_key = [sequence, nb_iteration]
-  cache.fetch(cache_key) do
+  cache.fetch([sequence, nb_iteration]) do
     if sequence.size <= 1 || nb_iteration.zero?
       sequence.chars.tally
     else
