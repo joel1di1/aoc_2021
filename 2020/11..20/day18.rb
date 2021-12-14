@@ -25,5 +25,8 @@ assert_eq 49, evaluate('3 + (4 * 5) * 2 + 3')
 assert_eq 12240, evaluate('5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))')
 assert_eq 13632, evaluate('((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2')
 
+
+puts File.readlines('day18.txt').map{|l| evaluate(l)}.sum
+
 puts 'YOUPI !!!'
 `git add . && git commit -am 'green autocommit'`
