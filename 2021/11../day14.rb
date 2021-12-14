@@ -44,6 +44,7 @@ def count_seq(sequence, nb_iteration)
 end
 
 assert_eq({ 'N' => 1 }, count_seq('N', 0))
+assert_eq({ 'N' => 1, 'C' => 1 }, count_seq('CN', 0))
 
 puts 'YOUPI !!!'
 `git add . && git commit -am 'green autocommit'`
