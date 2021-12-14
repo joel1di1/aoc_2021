@@ -22,22 +22,22 @@ def step(sequence, rules)
   new_sequence.join
 end
 
-def process(file)
+def process(file, nb_iter)
   rules, sequence = read_inputs(file)
 
   puts "init: #{sequence}"
-  10.times.with_index do |i|
+  nb_iter.times.with_index do |i|
     puts "step #{i}"
     sequence = step(sequence, rules)
     # puts "step#{i+1}: #{sequence}"
   end
 
   occurences = sequence.chars.tally.to_a.map { |_c, nb| nb }
-  puts occurences.max - occurences.min
-
+  puts "[1] #{file} (#{nb_iter}): #{occurences.max - occurences.min}"
 end
 
-process("day14.txt")
+process("day14_sample.txt", 10)
+process("day14.txt", 10)
 
 def count_seq(sequence, rules, nb_iteration, cache = {})
   cache.fetch([sequence, nb_iteration]) do
@@ -65,7 +65,7 @@ def part2(file, nb_iter)
   rules, sequence = read_inputs(file)
   counts = count_seq(sequence, rules, nb_iter)
   res = counts.values.max - counts.values.min
-  puts "#{file} (#{nb_iter}): #{res}"
+  puts "[2] #{file} (#{nb_iter}): #{res}"
   res
 end
 
