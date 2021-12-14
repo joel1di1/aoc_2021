@@ -2,7 +2,7 @@
 
 require_relative '../../fwk'
 
-def readinputs(file)
+def read_inputs(file)
   lines = File.readlines(file)
   sequence = lines.first.strip
   rules = lines[2..].each_with_object({}) do |line, rules|
@@ -23,7 +23,7 @@ def step(sequence, rules)
 end
 
 def process(file)
-  rules, sequence = readinputs(file)
+  rules, sequence = read_inputs(file)
 
   puts "init: #{sequence}"
   10.times.with_index do |i|
@@ -57,6 +57,9 @@ assert_eq({ 'N' => 1, 'C' => 1 }, count_seq('CN', rules, 0))
 assert_eq({ 'N' => 2, 'C' => 2 }, count_seq('CNCN', rules, 0))
 
 assert_eq({ 'N' => 1, 'C' => 2 }, count_seq('CN', rules, 1))
+
+rules, sequence = read_inputs('day14_sample.txt')
+assert_eq({ 'N' => 2, 'C' => 2, 'B' => 2, 'H' => 1 }, count_seq(sequence, rules, 1))
 
 puts 'YOUPI !!!'
 `git add . && git commit -am 'green autocommit'`
