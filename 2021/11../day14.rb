@@ -43,10 +43,10 @@ def count_seq(sequence, rules, nb_iteration, cache = {})
   cache_key = [sequence, nb_iteration]
   cached = cache[cache_key]
   if cached
-    puts "hit cache for #{cache_key}"
+    # puts "hit cache for #{cache_key}"
     cached
   else
-    puts "compute #{cache_key}"
+    # puts "compute #{cache_key}"
     new_value = if sequence.size <= 1 || nb_iteration.zero?
       sequence.chars.tally
     else
