@@ -40,10 +40,15 @@ end
 process("day14.txt")
 
 def count_seq(sequence, rules, nb_iteration, cache = {})
-  return sequence.chars.tally if sequence.size <= 1 || nb_iteration.zero?
-
-  new_sequence = step(sequence, rules)
-  count_seq(new_sequence, rules, nb_iteration - 1, cache)
+  cache_key = [sequence, nb_iteration]
+  cache.fetch(cache_key) do
+    if sequence.size <= 1 || nb_iteration.zero?
+      sequence.chars.tally
+    else
+      new_sequence = step(sequence, rules)
+      count_seq(new_sequence, rules, nb_iteration - 1, cache)
+    end
+  end
 end
 
 rules = { 'CN' => 'C' }
