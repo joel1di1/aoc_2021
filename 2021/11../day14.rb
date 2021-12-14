@@ -39,8 +39,11 @@ end
 
 process("day14.txt")
 
-def count_seq(sequence, rules, nb_iteration)
-  return sequence.chars.tally if sequence.size <= 1 || nb_iteration == 0
+def count_seq(sequence, rules, nb_iteration, cache = {})
+  return sequence.chars.tally if sequence.size <= 1 || nb_iteration.zero?
+
+  new_sequence = step(sequence, rules)
+  count_seq(new_sequence, rules, nb_iteration - 1, cache)
 end
 
 rules = { 'CN' => 'C' }
@@ -49,7 +52,7 @@ assert_eq({ 'N' => 1 }, count_seq('N', rules, 0))
 assert_eq({ 'N' => 1, 'C' => 1 }, count_seq('CN', rules, 0))
 assert_eq({ 'N' => 2, 'C' => 2 }, count_seq('CNCN', rules, 0))
 
-# assert_eq({ 'N' => 1, 'C' => 2 }, count_seq('CN', rules, 1))
+assert_eq({ 'N' => 1, 'C' => 2 }, count_seq('CN', rules, 1))
 
 puts 'YOUPI !!!'
 `git add . && git commit -am 'green autocommit'`
