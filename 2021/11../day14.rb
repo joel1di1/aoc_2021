@@ -81,6 +81,7 @@ rules, sequence = read_inputs('day14_sample.txt')
 assert_eq({ 'N' => 2, 'C' => 2, 'B' => 2, 'H' => 1 }, count_seq(sequence, rules, 1))
 
 part2('day14_sample.txt', 10)
+part2("day14.txt", 10)
 
 puts 'YOUPI !!!'
 `git add . && git commit -am 'green autocommit'`
