@@ -40,8 +40,14 @@ process("day14_sample.txt", 10)
 process("day14.txt", 10)
 
 def count_seq(sequence, rules, nb_iteration, cache = {})
-  cache.fetch([sequence, nb_iteration]) do
-    if sequence.size <= 1 || nb_iteration.zero?
+  cache_key = [sequence, nb_iteration]
+  cached = cache[cache_key]
+  if cached
+    puts "hit cache for #{cache_key}"
+    cached
+  else
+    puts "compute #{cache_key}"
+    new_value = if sequence.size <= 1 || nb_iteration.zero?
       sequence.chars.tally
     else
       sequence = step(sequence, rules)
@@ -58,6 +64,8 @@ def count_seq(sequence, rules, nb_iteration, cache = {})
       pairs[0..-2].map{|s| s[-1]}.each {|c| res[c] -= 1}
       res
     end
+    cache[[sequence, nb_iteration]] = new_value
+    new_value
   end
 end
 
@@ -82,6 +90,7 @@ assert_eq({ 'N' => 2, 'C' => 2, 'B' => 2, 'H' => 1 }, count_seq(sequence, rules,
 
 part2('day14_sample.txt', 10)
 part2("day14.txt", 10)
+# part2("day14.txt", 40)
 
 puts 'YOUPI !!!'
 `git add . && git commit -am 'green autocommit'`
