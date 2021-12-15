@@ -2,8 +2,10 @@
 
 require_relative '../../fwk'
 
+DEST_COORDS = {}
+
 class Node
-  attr_reader :cost, :visited
+  attr_reader :cost, :visited, :x, :y
   attr_accessor :tentative_cost
 
   def initialize(cost, x, y)
@@ -38,19 +40,60 @@ class Node
     end.compact
   end
 
+  def estimated_remaining
+    ((DEST_COORDS[:y] - y) + (DEST_COORDS[:x] - x)) * 5
+  end
+
   def <=>(other)
-    self.tentative_cost <=> other.tentative_cost
+    (tentative_cost + estimated_remaining) <=> (other.tentative_cost + other.estimated_remaining)
   end
 end
 
-def process(file)
+def read_grid(file)
   lines = File.readlines(file)
   grid = lines.map.with_index { |line, x| line.strip.chars.map.with_index { |c, y| Node.new(c.to_i, x, y) } }
+
+  init_x = grid.size
+  init_y = grid.first.size
+  new_x_size = grid.size * 5
+  new_y_size = grid.size * 5
+
+  (0..new_x_size - 1).each.with_index do |x|
+    (0..new_y_size - 1).each.with_index do |y|
+      grid[x] ||= Array.new(new_y_size)
+      next if grid[x][y]
+
+      prev_value = (y < init_y ? grid[x - init_x][y] : grid[x][y - init_y]).cost
+      grid[x][y] = Node.new(prev_value % 9 + 1, x, y)
+    end
+  end
+  grid
+end
+
+# class SortedNodes
+#   def initialize
+#     @array = []
+#   end
+#   def shift
+#     @array.shift
+#   end
+#   def <<(node)
+#     (0..).each do |i|
+#       next if @array[i].tentative_cost > node.tentative_cost
+#       @array.insert(i, node)
+#     end
+#   end
+# end
+
+def process(file)
+  grid = read_grid(file)
   start = grid[0][0]
   start.tentative_cost = 0
   start.visited!
   dest = grid[-1][-1]
-  unvisited = Set.new(grid.flatten)
+  DEST_COORDS[:x] = dest.x
+  DEST_COORDS[:y] = dest.y
+  unvisited = grid.size * grid.first.size
 
   next_in_line = Set.new([start])
   until next_in_line.empty?
@@ -66,7 +109,9 @@ def process(file)
         next_in_line << neighbor
       end
       current_node.visited!
-      unvisited.delete(current_node)
+      unvisited -= 1
+
+      puts "unvisited: #{unvisited}" if unvisited % 100==0
       # puts grid.map { |row| row.map(&:to_s).join }.join("\n")
       # puts ''
     end
