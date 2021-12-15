@@ -29,7 +29,6 @@ def process(file, nb_iter)
   nb_iter.times.with_index do |i|
     # puts "step #{i}"
     sequence = step(sequence, rules)
-    puts "step#{i+1}: #{sequence}"
   end
 
   occurences = sequence.chars.tally.to_a.map { |_c, nb| nb }
@@ -61,7 +60,7 @@ def count_seq(sequence, rules, nb_iteration, cache = {})
           acc[char] += count
         end
       end
-      pairs[0..-2].map{|s| s[-1]}.each {|c| res[c] -= 1}
+      pairs[0..-2].map { |s| s[-1] }.each { |c| res[c] -= 1 }
       res
     end
     cache[[sequence, nb_iteration]] = new_value
@@ -76,7 +75,7 @@ def part2(file, nb_iter, cache = {})
 
   pairs = (0..sequence.size - 2).map { |i| sequence[i, 2] }
   pair_occurences = pairs.tally
-  2.times do
+  nb_iter.times do
     pair_occurences = pair_occurences.each_with_object({}) do |entry, h|
       pair, occurences = entry
       c = rules[pair]
@@ -88,6 +87,16 @@ def part2(file, nb_iter, cache = {})
   end
 
   puts pair_occurences
+  h = pair_occurences.each_with_object({}) do |entry, h|
+    pair, occurence = entry
+    pair.chars.each do |c|
+      h[c] ||= 0
+      h[c] += occurence
+    end
+  end
+  h[start] += 1
+  h[last] += 1
+  (h.values.max - h.values.min) / 2
 end
 
 rules = { 'CN' => 'C' }
@@ -101,8 +110,8 @@ assert_eq({ 'N' => 1, 'C' => 2 }, count_seq('CN', rules, 1))
 # rules, sequence = read_inputs('day14_sample.txt')
 # assert_eq({ 'N' => 2, 'C' => 2, 'B' => 2, 'H' => 1 }, count_seq(sequence, rules, 1))
 
-# assert_eq 1588, part2('day14_sample.txt', 10)
-# assert_eq 2194, part2("day14.txt", 10)
+assert_eq 1588, part2('day14_sample.txt', 10)
+assert_eq 2194, part2("day14.txt", 10)
 
 # cache = {}
 # part2("day14.txt", 10, cache)
