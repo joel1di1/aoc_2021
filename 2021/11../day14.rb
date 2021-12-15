@@ -76,6 +76,16 @@ def part2(file, nb_iter, cache = {})
 
   pairs = (0..sequence.size - 2).map { |i| sequence[i, 2] }
   pair_occurences = pairs.tally
+  2.times do
+    pair_occurences = pair_occurences.each_with_object({}) do |entry, h|
+      pair, occurences = entry
+      c = rules[pair]
+      ["#{pair[0]}#{c}", "#{c}#{pair[1]}"].each do |new_pair|
+        h[new_pair] ||= 0
+        h[new_pair] += occurences
+      end
+    end
+  end
 
   puts pair_occurences
 end
