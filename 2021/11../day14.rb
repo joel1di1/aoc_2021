@@ -115,7 +115,7 @@ assert_eq 2194, part2("day14.txt", 10)
 
 # cache = {}
 # part2("day14.txt", 10, cache)
-puts part2("day14_sample.txt", 10)
+puts part2("day14_sample.txt", 40)
 
 puts 'YOUPI !!!'
 `git add . && git commit -am 'green autocommit'`
