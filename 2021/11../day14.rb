@@ -29,7 +29,7 @@ def process(file, nb_iter)
   nb_iter.times.with_index do |i|
     # puts "step #{i}"
     sequence = step(sequence, rules)
-    # puts "step#{i+1}: #{sequence}"
+    puts "step#{i+1}: #{sequence}"
   end
 
   occurences = sequence.chars.tally.to_a.map { |_c, nb| nb }
@@ -71,10 +71,13 @@ end
 
 def part2(file, nb_iter, cache = {})
   rules, sequence = read_inputs(file)
-  counts = count_seq(sequence, rules, nb_iter, cache)
-  res = counts.values.max - counts.values.min
-  puts "[2] #{file} (#{nb_iter}): #{res}"
-  res
+  start = sequence[0]
+  last = sequence[-1]
+
+  pairs = (0..sequence.size - 2).map { |i| sequence[i, 2] }
+  pair_occurences = pairs.tally
+
+  puts pair_occurences
 end
 
 rules = { 'CN' => 'C' }
@@ -93,7 +96,7 @@ assert_eq({ 'N' => 1, 'C' => 2 }, count_seq('CN', rules, 1))
 
 # cache = {}
 # part2("day14.txt", 10, cache)
-part2("day14_sample.txt", 4)
+part2("day14_sample.txt", 10)
 
 puts 'YOUPI !!!'
 `git add . && git commit -am 'green autocommit'`
