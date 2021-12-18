@@ -88,48 +88,9 @@ str_rules = []
   str_rules[i] ||= convert_rule(i, rules, str_rules)
 end
 
-all = [
-  'abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa',
-  'bbabbbbaabaabba',
-  'babbbbaabbbbbabbbbbbaabaaabaaa',
-  'aaabbbbbbaaaabaababaabababbabaaabbababababaaa',
-  'bbbbbbbaaaabbbbaaabbabaaa',
-  'bbbababbbbaaaaaaaabbababaaababaabab',
-  'ababaaaaaabaaab',
-  'ababaaaaabbbaba',
-  'baabbaaaabbaaaababbaababb',
-  'abbbbabbbbaaaababbbbbbaaaababb',
-  'aaaaabbaabaaaaababaa',
-  'aaaabbaaaabbaaa',
-  'aaaabbaabbaaaaaaabbbabbbaaabbaabaaa',
-  'babaaabbbaaabaababbaabababaaab',
-  'aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba',
-]
-
-matches = [
-  'bbabbbbaabaabba',
-  'babbbbaabbbbbabbbbbbaabaaabaaa',
-  'aaabbbbbbaaaabaababaabababbabaaabbababababaaa',
-  'bbbbbbbaaaabbbbaaabbabaaa',
-  'bbbababbbbaaaaaaaabbababaaababaabab',
-  'ababaaaaaabaaab',
-  'ababaaaaabbbaba',
-  'baabbaaaabbaaaababbaababb',
-  'abbbbabbbbaaaababbbbbbaaaababb',
-  'aaaaabbaabaaaaababaa',
-  'aaaabbaabbaaaaaaabbbabbbaaabbaabaaa',
-  'aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba',
-]
-
 reg = /^(#{str_rules[0]})$/
 
 begin
-  # matches.each do |msg|
-  #   assert msg[reg], msg: "#{msg} should have match"
-  # end
-  # (all - matches).each do |msg|
-  #   assert !msg[reg], msg: "#{msg} should NOT have match"
-  # end
   pp messages.select { |msg| msg[reg] }.count
 rescue StandardError => e
   pp e.message[0..100]
