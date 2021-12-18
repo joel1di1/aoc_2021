@@ -3,7 +3,7 @@
 require_relative '../../fwk'
 
 class Probe
-  attr_reader :x, :y, :x_velocity, :y_velocity, :max
+  attr_reader :x, :y, :x_velocity, :y_velocity, :max, :x_init_velocity, :y_init_velocity
 
   def self.shoot(x_velocity, y_velocity, target)
     probe = Probe.new(x_velocity, y_velocity, target)
@@ -20,6 +20,7 @@ class Probe
     @y_velocity = y_velocity
     @target = target
     @max = y
+    @positions = [{x: @x, y: @y}]
   end
 
   def step
@@ -28,6 +29,7 @@ class Probe
     @max = @y if @max < @y
     @x_velocity -= 1 if @x_velocity.positive?
     @y_velocity -= 1
+    @positions << {x: @x, y: @y}
   end
 
   def hit?
@@ -53,7 +55,13 @@ class Probe
   def to_s
     "(#{@x_init_velocity}, #{@y_init_velocity}): last pos: (#{@x}, #{@y}), target: #{@target} - hit: #{hit?}, miss: #{miss?}"
   end
+
+  def too_high?
+    @positions.last[:y] > @target[:y]
+  end
 end
+
+# 7 + 6 + 5 + 4 + 3 + 2 + 1 + 0 - 1 - 2 - 3 - 4 - 5 - 6 - 7
 
 probe = Probe.shoot(6, 9, { x: 20..30, y: -10..-5 })
 assert probe.hit?
@@ -73,7 +81,7 @@ def find_max(target)
   possible_starting_x_velocity = possible_starting_x_velocity(target)
 
   maxes = possible_starting_x_velocity.map do |x_vel|
-    probes = (0..500).map {|y_vel| Probe.shoot(x_vel, y_vel, target)}
+    probes = (0..11).map {|y_vel| Probe.shoot(x_vel, y_vel, target)}
     hitting_probes = probes.select(&:hit?)
     max = hitting_probes.map(&:max).max
     max
@@ -85,16 +93,19 @@ def count_all(target)
   possible_starting_x_velocity = possible_starting_x_velocity(target)
 
   all_hitting_probes = possible_starting_x_velocity.map do |x_vel|
-    probes = (0..1000).map {|y_vel| Probe.shoot(x_vel, y_vel, target)}
+    probes = (-110..110).map {|y_vel| Probe.shoot(x_vel, y_vel, target)}
     probes.select(&:hit?)
   end
 
   all_hitting_probes = all_hitting_probes.flatten
-  all_hitting_probes.sum
+  puts all_hitting_probes.map{ |p| "(#{p.x_init_velocity}, #{p.y_init_velocity})"}.join(',')
+  all_hitting_probes.count
 end
+
 #
 # assert_eq 45, find_max({ x: 20..30, y: -10..-5 })
 # puts "max: #{find_max({ x: 265..287, y: -103..-58 })}"
+puts "count: #{count_all({ x: 20..30, y: -10..-5 })}"
 puts "count: #{count_all({ x: 265..287, y: -103..-58 })}"
 
 #
