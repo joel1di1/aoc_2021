@@ -20,7 +20,7 @@ class Scan
   end
 
   def to_s
-    "Scan #{@name}\n#{@points.map(&:to_s).join("\n")}\n\n"
+    "Scan #{@name}" # \n#{@points.map(&:to_s).join("\n")}\n\n"
   end
 
   def compute_distances
@@ -35,6 +35,10 @@ class Scan
         p2.vectors[p1] = Point.new(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z)
       end
     end
+  end
+
+  def rotate!(rotation)
+    @points.each { |p| p.rotate!(rotation) }
   end
 end
 
@@ -51,6 +55,31 @@ class Point
 
   def to_s
     "(#{x}, #{y}, #{z})"
+  end
+
+  def ==(other)
+    x == other.x && y == other.y && z == other.z
+  end
+
+  def rotate!(rotation)
+    rx, ry, rz = rotation
+    rx.times do
+      tmp = @y
+      @y = @z
+      @z = -tmp
+    end
+    ry.times do
+      tmp = @x
+      @x = -@z
+      @z = tmp
+    end
+    rz.times do
+      tmp = @x
+      @x = @y
+      @y = -tmp
+    end
+
+    vectors.values.map { |v| v.rotate!(rotation) }
   end
 end
 
@@ -73,47 +102,63 @@ def read_inputs(file)
   scans
 end
 
-def rotate(vectors, rotation)
-  rx, ry, rz, sym = rotation
-  vectors.map do |_vector|
-    vector = _vector
-    rx.times { vector = Point.new(vector.x, -vector.z, vector.y) }
-    ry.times { vector = Point.new(-vector.z, vector.y, vector.x) }
-    rz.times { vector = Point.new(vector.y, -vector.x, vector.z) }
-    vector
+def rotate(vector, rotation)
+  rx, ry, rz = rotation
+  rx.times { vector = Point.new(vector.x, vector.z, -vector.y) }
+  ry.times { vector = Point.new(-vector.z, vector.y, vector.x) }
+  rz.times { vector = Point.new(vector.y, -vector.x, vector.z) }
+  vector
+end
+
+def rotations
+  @rotations ||= begin
+    tmp_rotations = []
+    (0..3).each do |rx|
+      (0..3).each do |ry|
+        (0..3).each do |rz|
+          tmp_rotations << [rx, ry, rz]
+        end
+      end
+    end
+
+    v = Point.new(1, 2, 3)
+    h = {}
+    tmp_rotations.map { |rot| h[rotate(v, rot).to_s] ||= rot }
+    h.values
   end
 end
 
-rotations = []
-(0..3).each do |rx|
-  (0..3).each do |ry|
-    (0..3).each do |rz|
-      rotations << [rx, ry, rz]
-    end
+def get_matching_vectors(distances_in_common, s1, scan_match)
+  distances_in_common[0, 2].map do |distance_in_common|
+    s1_points = s1.distances_to_points[distance_in_common].flatten.uniq
+    scan_match_points = scan_match.distances_to_points[distance_in_common].flatten.uniq
+
+    [s1_points[0].vectors[s1_points[1]], scan_match_points[0].vectors[scan_match_points[1]]]
   end
 end
+
+puts "count: #{rotations.count}"
+puts "count uniq: #{rotations.uniq.count}"
 
 scans = read_inputs('day19.txt')
 scans.each(&:compute_distances)
 
 s1 = scans.first
-match_with_s1 = scans[1..].select { |s2| (s1.distances - s2.distances).count <= 259 }
-puts match_with_s1.map(&:name).join(", ")
+scan_match_with_s1 = scans[1..].select { |s2| (s1.distances - s2.distances).count <= 259 }
+puts "#{scan_match_with_s1.map(&:name).join(',')} has 12 points in commmon with #{s1}"
 
-s2 = match_with_s1.first
-distances = s1.distances.intersection(s2.distances)
+scan_match_with_s1.each do |scan_match|
+  puts "trying #{scan_match}"
+  distances_in_common = s1.distances.intersection(scan_match.distances)
 
-s1_points = s1.distances_to_points[distances.first].flatten.uniq
-s2_points = s2.distances_to_points[distances.first].flatten.uniq
+  matching_vectors_list = get_matching_vectors(distances_in_common, s1, scan_match)
+  rotation = rotations.find do |rotation|
+    matching_vectors_list.all? do |matching_vectors|
+      matching_vectors[0] == rotate(matching_vectors[1], rotation)
+    end
+  end
 
-v1 = s1_points[0].vectors[s1_points[1]]
-v2 = s2_points[0].vectors[s2_points[1]]
-
-rotation = rotations.find do |rotation|
-  puts "\ttest rotation #{rotation}"
-  puts v1
-  puts rotate([v2], rotation).first
-  v1 == rotate([v2], rotation).first
+  scan_match.rotate!(rotation)
 end
 
 puts "rotation: #{rotation} !"
