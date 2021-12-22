@@ -9,6 +9,10 @@ class Universe
     @dice = dice.dup
     @players = players.map(&:dup)
   end
+
+  def split
+    Universe.new(dice, players)
+  end
 end
 
 class Dice
@@ -44,18 +48,26 @@ def play(p1_pos, p2_pos)
   turn = 0
   until universes.all? { |universe| universe.players.any? { |p| p[:score] >= wining_score } }
     turn += 1
-    fixed_universes = universes.reject { |universe| universe.players.any?  { |p| p[:score] >= wining_score } }
+    fixed_universes = universes.reject { |universe| universe.players.any? { |p| p[:score] >= wining_score } }
 
     fixed_universes.each do |universe|
-      player = universe.players[(turn - 1) % 2]
+      player_universe1 = universe.players[(turn - 1) % 2]
+      local_universe = [universe]
       3.times do
-        universe.dice.roll
-        player[:position] = (player[:position] + universe.dice.value) % 10
+        local_universe.dice.roll
+        universe2 = local_universe.split
+        player_universe2 = universe2.players[(turn - 1) % 2]
+
+        universe3 = local_universe.split
+        player_universe3 = universe3.players[(turn - 1) % 2]
+
+        player_universe1[:position] = (player_universe1[:position] + 1) % 10
+        player_universe2[:position] = (player_universe2[:position] + 2) % 10
+        player_universe3[:position] = (player_universe3[:position] + 3) % 10
       end
-      player[:score] += player[:position] + 1
+      player_universe1[:score] += player_universe1[:position] + 1
     end
   end
-
 
   puts universes.first.players
   puts universes.first.dice.nb_rolls
