@@ -15,9 +15,9 @@ def set(x_range:, y_range:, z_range:, value:)
   y_range = shift(y_range)
   z_range = shift(z_range)
 
-  # x_range = select(x_range)
-  # y_range = select(y_range)
-  # z_range = select(z_range)
+  x_range = select(x_range)
+  y_range = select(y_range)
+  z_range = select(z_range)
 
   x_range.each { |x| y_range.each { |y| z_range.each { |z| @grid[x][y][z] = value } } }
 end
@@ -32,7 +32,9 @@ end
 
 def process(file)
 
-  @max = File.read(file).scan(/-?(\d+)/).flatten.map(&:to_i).max
+  # @max = File.read(file).scan(/-?(\d+)/).flatten.map(&:to_i).max
+
+  @max = 50
 
   cmds = File.readlines(file).map do |l|
     l.strip.gsub('=', ':').gsub('x:', 'x_range:').gsub('y:', 'y_range:').gsub('z:', 'z_range:')
