@@ -19,9 +19,11 @@ class Scan
     @points << point
   end
 
-  def to_s
+  def to_str
     "Scan #{@name}" # \n#{@points.map(&:to_s).join("\n")}\n\n"
   end
+
+  alias_method :to_s, :to_str
 
   def compute_distances
     @points.each_with_index do |p1, i|
@@ -40,6 +42,10 @@ class Scan
   def rotate!(rotation)
     @points.each { |p| p.rotate!(rotation) }
   end
+
+  def translate!(translation)
+    @points.each { |p| p.translate!(translation) }
+  end
 end
 
 class Point
@@ -53,12 +59,25 @@ class Point
     @vectors = {}
   end
 
-  def to_s
+  def to_str
     "(#{x}, #{y}, #{z})"
   end
 
+  alias_method :to_s, :to_str
+
   def ==(other)
     x == other.x && y == other.y && z == other.z
+  end
+
+  def <=>(other)
+    x <=> other.x || y <=> other.y || z <=> other.z
+  end
+
+  def translate!(translation)
+    tx, ty, tz = translation
+    @x += tx
+    @y += ty
+    @z += tz
   end
 
   def rotate!(rotation)
@@ -80,6 +99,14 @@ class Point
     end
 
     vectors.values.map { |v| v.rotate!(rotation) }
+  end
+
+  def length
+    Math.sqrt(x.pow(2) + y.pow(2) + z.pow(2))
+  end
+
+  def coords
+    [x, y, z]
   end
 end
 
@@ -128,38 +155,81 @@ def rotations
   end
 end
 
-def get_matching_vectors(distances_in_common, s1, scan_match)
-  distances_in_common[0, 2].map do |distance_in_common|
-    s1_points = s1.distances_to_points[distance_in_common].flatten.uniq
-    scan_match_points = scan_match.distances_to_points[distance_in_common].flatten.uniq
+def get_matching_points_and_vectors(distances_in_common, s1, scan_match)
 
-    [s1_points[0].vectors[s1_points[1]], scan_match_points[0].vectors[scan_match_points[1]]]
+  s2_vectors = nil
+  s1_first_point = nil
+  s1_first_vector = nil
+  s1_second_vector = nil
+  s2_first_point = nil
+
+  distances_in_common.find do |first_distance|
+    s1_first_point, s1_second_point = s1.distances_to_points[first_distance]
+    s1_first_vector = s1_first_point.vectors[s1_second_point]
+
+    s1_second_vector = s1_first_point.vectors.values.find do |vector|
+      vector != s1_first_vector && distances_in_common.include?(vector.length)
+    end
+
+    s2_points = scan_match.distances_to_points[first_distance]
+    s2_first_point = s2_points.find do |p|
+      p.vectors.values.select do |v|
+        [s1_first_vector, s1_second_vector].map(&:length).include?(v.length)
+      end
+    end
+
+    s2_vectors = s2_first_point.vectors.values.select do |v|
+      [s1_first_vector, s1_second_vector].map(&:length).include?(v.length)
+    end
+
+    s2_vectors && s2_vectors.length >= 2
   end
+
+  [s1_first_point, [s1_first_vector, s1_second_vector].sort_by(&:length), s2_first_point, s2_vectors.sort_by(&:length)]
 end
 
 puts "count: #{rotations.count}"
 puts "count uniq: #{rotations.uniq.count}"
 
-scans = read_inputs('day19.txt')
-scans.each(&:compute_distances)
+unprocessed_scans = read_inputs('day19.txt')
+unprocessed_scans.each(&:compute_distances)
 
-s1 = scans.first
-scan_match_with_s1 = scans[1..].select { |s2| (s1.distances - s2.distances).count <= 259 }
-puts "#{scan_match_with_s1.map(&:name).join(',')} has 12 points in commmon with #{s1}"
+scans_to_do = [unprocessed_scans.shift]
+scans_done = []
+until unprocessed_scans.empty?
+  s1 = scans_to_do.shift
+  scan_match_with_s1 = unprocessed_scans.select { |s2| (s1.distances - s2.distances).count <= 259 }
+  puts "#{scan_match_with_s1.map(&:name).join(',')} has 12 points in commmon with #{s1}"
 
-scan_match_with_s1.each do |scan_match|
-  puts "trying #{scan_match}"
-  distances_in_common = s1.distances.intersection(scan_match.distances)
+  scan_match_with_s1.each do |scan_match|
+    puts "trying #{scan_match}"
+    distances_in_common = s1.distances.intersection(scan_match.distances)
 
-  matching_vectors_list = get_matching_vectors(distances_in_common, s1, scan_match)
-  rotation = rotations.find do |rotation|
-    matching_vectors_list.all? do |matching_vectors|
-      matching_vectors[0] == rotate(matching_vectors[1], rotation)
+    s1_point, s1_vectors, s2_point, s2_vectors = get_matching_points_and_vectors(distances_in_common, s1, scan_match)
+    rotation = rotations.find do |rotation|
+      (0..1).all? do |i|
+        s1_vectors[i] == rotate(s2_vectors[i], rotation)
+      end
     end
+
+    scan_match.rotate!(rotation)
+
+    translation = [-(s2_point.x - s1_point.x), -(s2_point.y - s1_point.y), -(s2_point.z - s1_point.z)]
+    scan_match.translate!(translation)
+
+    puts "#{scan_match.to_s} should match #{s1}. Rotation: #{rotation}, translation: #{translation}"
   end
 
-  scan_match.rotate!(rotation)
+  scan_match_with_s1.each do |scan|
+    unprocessed_scans.delete(scan)
+    scans_to_do << scan
+  end
+  scans_done << s1
 end
 
-puts "rotation: #{rotation} !"
-puts "OK"
+scans_done = scans_done.concat(scans_to_do)
+
+all_points_coords = scans_done.flatten.map(&:points).flatten.sort.map(&:coords)
+puts "all_points: #{all_points_coords}"
+puts "all_points count: #{all_points_coords.count}"
+puts "all_points uniq count: #{all_points_coords.uniq.count}"

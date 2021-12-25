@@ -41,7 +41,7 @@ end
 def play(p1_pos, p2_pos)
   player1 = { position: p1_pos - 1, score: 0 }
   player2 = { position: p2_pos - 1, score: 0 }
-  universes = [Universe.new(Dice.new, [player1, player2])]
+  dice = Dice.new
 
   wining_score = 1000
 
