@@ -3,12 +3,17 @@
 require_relative '../../fwk'
 
 class Scan
-  attr_reader :distances_to_points, :name, :points
+  attr_reader :distances_to_points, :name, :points, :center
+
+  def self.distance(p1, p2)
+    Math.sqrt((p1.x - p2.x).pow(2) + (p1.y - p2.y).pow(2) + (p1.z - p2.z).pow(2))
+  end
 
   def initialize(name)
     @name = name
     @points = []
     @distances_to_points = {}
+    @center = Point.new(0,0,0)
   end
 
   def distances
@@ -28,7 +33,7 @@ class Scan
   def compute_distances
     @points.each_with_index do |p1, i|
       @points[i + 1..].each do |p2|
-        d = Math.sqrt((p1.x - p2.x).pow(2) + (p1.y - p2.y).pow(2) + (p1.z - p2.z).pow(2))
+        d = Scan.distance(p1, p2)
         p1.distances[p2] = d
         p2.distances[p1] = d
         @distances_to_points[d] = [p1, p2]
@@ -45,18 +50,24 @@ class Scan
 
   def translate!(translation)
     @points.each { |p| p.translate!(translation) }
+    @center.translate!(translation)
   end
 end
 
 class Point
   attr_reader :x, :y, :z, :distances, :vectors
 
-  def initialize(x, y, z)
+  def initialize(x, y, z, scanner: false)
     @x = x
     @y = y
     @z = z
     @distances = {}
     @vectors = {}
+    @scanner = scanner
+  end
+
+  def scanner?
+    @scanner
   end
 
   def to_str
@@ -229,7 +240,26 @@ end
 
 scans_done = scans_done.concat(scans_to_do)
 
-all_points_coords = scans_done.flatten.map(&:points).flatten.sort.map(&:coords)
+all_points = scans_done.flatten.map(&:points).flatten.sort
+
+all_points_coords = all_points.reject(&:scanner?).map(&:coords)
 puts "all_points: #{all_points_coords}"
 puts "all_points count: #{all_points_coords.count}"
 puts "all_points uniq count: #{all_points_coords.uniq.count}"
+
+def manh(p1, p2)
+  (p2.x - p1.x).abs + (p2.y - p1.y).abs + (p2.z - p1.z).abs
+end
+
+
+centers = scans_done.map(&:center)
+
+puts "max..."
+max = 0
+centers.each do |p|
+  centers.each do |o|
+    max = [max, manh(p, o)].max
+  end
+end
+
+puts "max = #{max}"
