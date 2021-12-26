@@ -3,15 +3,21 @@
 require_relative '../../fwk'
 
 class Universe
-  attr_reader :dice, :players
+  attr_reader :players
+  attr_accessor :count, :turn
 
-  def initialize(dice, players)
-    @dice = dice.dup
+  def self.universes_by_positions
+    @universes_by_positions ||= {}
+  end
+
+  def initialize(players, turn, count = 1)
     @players = players.map(&:dup)
+    @count = count
+    @turn = turn
   end
 
   def split
-    Universe.new(dice, players)
+    Universe.new(players, turn, count)
   end
 end
 
@@ -32,10 +38,16 @@ class Dice
   def nb_rolls
     @i + 1
   end
+end
 
-  def dup
-    Dice.new(@i)
+def merge(universes)
+  new_us_by_players = {}
+  universes.each do |universe|
+    key = universe.players + [universe.turn]
+    new_us_by_players[key] ||= universe
+    new_us_by_players[key].count += universe.count if new_us_by_players[key] != universe
   end
+  new_us_by_players.values
 end
 
 def play(p1_pos, p2_pos)
@@ -43,35 +55,54 @@ def play(p1_pos, p2_pos)
   player2 = { position: p2_pos - 1, score: 0 }
   dice = Dice.new
 
-  wining_score = 1000
+  wining_score = 21
 
-  turn = 0
-  until universes.all? { |universe| universe.players.any? { |p| p[:score] >= wining_score } }
-    turn += 1
-    fixed_universes = universes.reject { |universe| universe.players.any? { |p| p[:score] >= wining_score } }
+  universes = [Universe.new([player1, player2], -1)]
+  unfinished_universes = universes.dup
+  step = 0
+  until unfinished_universes.empty?
+    step += 1
+    puts "step: #{step}"
+    puts "still #{unfinished_universes.count} unfinished universes"
 
-    fixed_universes.each do |universe|
-      player_universe1 = universe.players[(turn - 1) % 2]
-      local_universe = [universe]
+    unfinished_universes.each do |universe|
+      # puts "Unfinished universe: #{universe}"
+      universe.turn = (universe.turn + 1) % 2
+      player_index = universe.turn
+      local_universes = [universe]
       3.times do
-        local_universe.dice.roll
-        universe2 = local_universe.split
-        player_universe2 = universe2.players[(turn - 1) % 2]
+        new_universes = []
+        local_universes.each do |universe1|
+          dice.roll
+          universe2 = universe1.split
+          universe3 = universe1.split
+          new_universes << universe2
+          new_universes << universe3
 
-        universe3 = local_universe.split
-        player_universe3 = universe3.players[(turn - 1) % 2]
+          player_universe1 = universe1.players[player_index]
+          player_universe2 = universe2.players[player_index]
+          player_universe3 = universe3.players[player_index]
 
-        player_universe1[:position] = (player_universe1[:position] + 1) % 10
-        player_universe2[:position] = (player_universe2[:position] + 2) % 10
-        player_universe3[:position] = (player_universe3[:position] + 3) % 10
+          player_universe1[:position] = (player_universe1[:position] + 1) % 10
+          player_universe2[:position] = (player_universe2[:position] + 2) % 10
+          player_universe3[:position] = (player_universe3[:position] + 3) % 10
+        end
+        local_universes.concat(new_universes)
       end
-      player_universe1[:score] += player_universe1[:position] + 1
+      local_universes.each do |universe|
+        player = universe.players[player_index]
+        player[:score] += player[:position] + 1
+      end
+      universes.concat(local_universes)
     end
+
+    universes = merge(universes.uniq)
+    unfinished_universes = universes.reject { |universe| universe.players.any? { |p| p[:score] >= wining_score } }
   end
 
-  puts universes.first.players
-  puts universes.first.dice.nb_rolls
-  puts "res: #{universes.first.players.map { |p| p[:score] }.min * universes.first.dice.nb_rolls}"
+  victories = [0, 0]
+  universes.each { |u| u.players.first[:score] >= 21 ? victories[0] += u.count : victories[1] += u.count }
+  puts "victories; #{victories}, max: #{victories.max}"
 end
 
 play(4, 8)
