@@ -113,7 +113,7 @@ class Alu
       end.flatten.uniq
       new_zs_by_max_inputs = {}
       zs_to_inputs.map(&:first).each do |z, computed_input|
-        new_zs_by_max_inputs[z] = computed_input if z < 1_000_000 && computed_input > (new_zs_by_max_inputs[z] || '0')
+        new_zs_by_max_inputs[z] = computed_input if z < 1_000_000 && (new_zs_by_max_inputs[z].nil? || computed_input < new_zs_by_max_inputs[z])
       end
       zs_to_inputs = new_zs_by_max_inputs
       t_end = Time.now
