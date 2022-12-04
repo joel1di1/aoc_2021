@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 commons = File.readlines('day3.txt').map do |line|
   # split string in 2 parts of equal length
-  left = line[0..line.length/2-1]
-  right = line[line.length/2..-1]
+  left = line[0..line.length / 2 - 1]
+  right = line[line.length / 2..]
 
   # find charaters that appears in both strings
   left.chars.find { |c| right.include?(c) }
@@ -12,7 +14,6 @@ sum = commons.map do |c|
 end.sum
 
 puts "part1: #{sum}"
-
 
 # part 2
 lines = File.readlines('day3.txt')
