@@ -61,3 +61,8 @@ lines.each do |line|
 end
 
 puts "part1: #{final_value('a')}"
+
+@wires['b'] = final_value('a')
+@cache = {}
+
+puts "part2: #{final_value('a')}"
