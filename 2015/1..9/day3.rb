@@ -45,4 +45,3 @@ File.open('day3.txt', 'r') do |f|
   end
 end
 puts "part2: #{positions.size}"
-
