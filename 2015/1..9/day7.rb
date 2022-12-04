@@ -60,4 +60,4 @@ lines.each do |line|
   end
 end
 
-puts final_value('a')
+puts "part1: #{final_value('a')}"
