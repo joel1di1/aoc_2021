@@ -12,3 +12,4 @@ end
 input = '1321131112'
 
 puts "part1: #{play_look_and_say_n_times(40, input).size}"
+puts "part2: #{play_look_and_say_n_times(50, input).size}"
