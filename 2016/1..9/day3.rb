@@ -2,22 +2,27 @@
 
 require 'byebug'
 
-def valid?(a,b,c)
-  ((a < b + c) && (b < a+c) && (c < a+b)) ? 1 : 0
+# read triangle in a file, each triangle is a line.
+# each line hase 3 numbers, representing 3 side
+
+triangles = File.readlines('day3.txt').map do |line|
+  line.strip.split.map(&:to_i)
 end
 
-lines = File.readlines('day3.txt').map(&:strip)
+# part 1
+# each triangle is a line, so we can just check if the sum of the 2 smallest
+# sides is greater than the largest side
 
-matrix = lines.map do |line|
-  line.scan(/(\d+)/).flatten.map(&:to_i)
+valid_triangles = triangles.select do |triangle|
+  triangle.sort[0..1].sum > triangle.sort[2]
 end
 
-sum1 = matrix.map { |row| valid?(*row) }.sum
+puts "part1: #{valid_triangles.count}"
 
-puts "part1: #{sum1}"
+# part 2
 
-sum2 = matrix.transpose.map do |row|
-  row.each_slice(3).to_a.map { |slice| valid?(*slice) }.sum
-end.sum
+valid_triangles = triangles.transpose.flatten.each_slice(3).select do |triangle|
+  triangle.sort[0..1].sum > triangle.sort[2]
+end
 
-puts "part2: #{sum2}"
+puts "part2: #{valid_triangles.count}"
