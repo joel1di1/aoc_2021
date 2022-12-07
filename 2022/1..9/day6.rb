@@ -17,9 +17,7 @@ def find_start_of_marker(datastream, marker_length)
 
     # If the last_chars array has marker_length elements and they are all different,
     # return the number of characters processed up to this point
-    if last_chars.uniq.length == marker_length
-      return index + 1
-    end
+    return index + 1 if last_chars.uniq.length == marker_length
   end
 
   # If no marker was found, return 0
@@ -35,7 +33,7 @@ def find_start_of_message(datastream)
 end
 
 # Read the input from the file named day6.txt
-datastream = File.read("day6.txt")
+datastream = File.read('day6.txt')
 
 # Print the results of both parts of the problem
 puts "Part 1: #{find_start_of_packet(datastream)}"
