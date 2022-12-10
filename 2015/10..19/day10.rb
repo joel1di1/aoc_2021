@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 def look_and_say(str)
-  str.chars.chunk(&:itself).map{|c, v| "#{v.size}#{c}" }.join  
+  str.chars.chunk(&:itself).map { |c, v| "#{v.size}#{c}" }.join
 end
 
 def play_look_and_say_n_times(n, str)

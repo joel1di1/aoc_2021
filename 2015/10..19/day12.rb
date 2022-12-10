@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'json'
 require 'byebug'
 
@@ -10,16 +12,15 @@ def sum_not_red(element)
   return element if element.instance_of? Integer
 
   if element.instance_of? Hash
-    values = element.map{|k,v| v}
+    values = element.map { |_k, v| v }
     return 0 if values.include?('red')
 
-    return values.compact.map{|val| sum_not_red(val) }.sum
+    return values.compact.map { |val| sum_not_red(val) }.sum
   elsif element.instance_of? Array
-    return element.compact.map{|val| sum_not_red(val) }.sum
+    return element.compact.map { |val| sum_not_red(val) }.sum
   end
   0
 end
-
 
 sum = sum_not_red(json)
 puts "part2 : #{sum}"
