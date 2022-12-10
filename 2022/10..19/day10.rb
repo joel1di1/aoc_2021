@@ -38,7 +38,7 @@ puts "part 1: #{sum_six}"
   putc "\n" if i % 40 == 0 
 
   pos = i%40
-  sprite = (register[pos]-1..register[pos]+1)
+  sprite = (register[i]-1..register[i]+1)
   inc = sprite.include?(pos)
   
   # puts "sprite: #{sprite}"
