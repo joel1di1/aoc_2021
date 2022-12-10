@@ -25,30 +25,21 @@ end
 # take array of numbers, return array the number multiplied by index in the array + 1
 signals = register.map.with_index { |n, i| n * (i + 1) }
 
-sum_six = [20, 60, 100, 140, 180, 220].map do |i| 
-  puts "signal #{i}: #{signals[i-1]}"
-  signals[i-1]
-end.sum
+sum_six = [20, 60, 100, 140, 180, 220].map { |i| signals[i-1] }.sum
 
 puts "part 1: #{sum_six}"
 
 # part 2
 
 (0..239).each do |i|
-  putc "\n" if i % 40 == 0 
-
   pos = i%40
-  sprite = (register[i]-1..register[i]+1)
-  inc = sprite.include?(pos)
-  
-  # puts "sprite: #{sprite}"
-  # puts "Start cycle   #{i+1}: begin executing #{instructions[0]}"
-  # puts "During cycle  #{i+1}: CRT draws pixel in position #{pos}"
 
-  # debugger
+  putc "\n" if pos == 0 
 
+  register_value = register[i]
+  sprite = (register_value-1..register_value+1)
 
-  putc inc ? '#' : '.'
+  putc sprite.include?(pos) ? '#' : '.'
 end
 
 puts "\n"
