@@ -29,3 +29,10 @@ sum_six = [20, 60, 100, 140, 180, 220].map do |i|
 end.sum
 
 puts "part 1: #{sum_six}"
+
+# part 2
+
+(0..239).each do |i|
+  putc '.'
+  putc "\n" if i % 40 == 0 
+end
