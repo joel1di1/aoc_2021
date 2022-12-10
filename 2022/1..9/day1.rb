@@ -1,31 +1,46 @@
-# frozen_string_literal: true
+# Read input from day1.txt
+input = File.read("day1.txt")
 
-require 'readline'
+# Split input into individual lines
+lines = input.split("\n")
 
-def read_input_lines
-  File.readlines(File.basename(__FILE__).gsub('.rb', '.txt'))
-end
+# Create a hash to store each Elf's Calories
+calories = {}
+current_elf = ""
 
-# split array of integer into array of array of integer on each 0
-def split_on_zero(numbers)
-  acc = []
-  acc << []
-  numbers.each do |n|
-    if n.zero?
-      acc << []
-    else
-      acc.last << n
-    end
+# Keep track of the current Elf index
+elf_index = 0
+
+# Iterate over each line of input
+lines.each do |line|
+  if line.empty?
+    # If the line is empty, it marks the end of an Elf's inventory
+    # Set the current Elf to the empty string to indicate that no Elf is currently being processed
+    current_elf = ""
+  elsif current_elf.empty?
+    # If the current Elf is not set, this line must contain the number of Calories for the food
+    # Initialize the Elf's Calories to the number on this line
+    elf_index += 1
+    current_elf = "Elf #{elf_index}"
+    calories[current_elf] = line.to_i
+  else
+    # Otherwise, this line must contain the number of Calories for the current Elf's food
+    # Add the Calories to the Elf's total
+    calories[current_elf] += line.to_i
   end
-  acc
 end
 
-def sum_of_top_three_numbers(numbers)
-  numbers.sort.reverse.take(3).sum
+# Sort the Elves by the number of Calories they are carrying, from most to least
+calories = calories.sort_by { |elf, calories| -calories }
+
+# Print the names and number of Calories carried by the top three Elves
+puts "The top three Elves are:"
+calories[0,3].each do |elf, calories|
+  puts "#{elf}: #{calories} Calories"
 end
 
-arrays = split_on_zero(read_input_lines.map(&:to_i))
-sums = arrays.map(&:sum)
-puts "1st part: #{sums.max}"
+# Calculate the total number of Calories carried by the top three Elves
+total_calories = calories[0,3].inject(0) { |sum, (_, calories)| sum + calories }
 
-puts "2nd part: #{sum_of_top_three_numbers(sums)}"
+# Print the total number of Calories carried by the top three Elves
+puts "These Elves are carrying a total of #{total_calories} Calories"

@@ -27,8 +27,21 @@ def solve(input)
     .sum
 end
 
+def solve_part2(input)
+  input.each_line.select do |line|
+    match = line.match(/(?<name>.+)-(?<sector_id>\d+)\[(?<checksum>.+)\]/)
+    checksum = match[:checksum]
+    name = match[:name].gsub('-', '')
+    checksum == name.chars.group_by(&:itself).map { |k, v| [k, v.size] }.sort_by { |k, v| [-v, k] }.map(&:first).take(5).join
+end
+    .select do |match|
+    end
+    .map { |match| [ match[:sector_id].to_i] }
+end
+
 # input in day4.txt
 input = File.read('day4.txt')
 
 puts "part1: #{solve(input)}"
 
+puts "part2: #{solve_part2(input)}"
