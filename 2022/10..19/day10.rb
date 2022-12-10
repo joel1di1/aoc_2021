@@ -1,5 +1,7 @@
 # frozen_string_literal
 
+require 'byebug'
+
 instructions = File.readlines('day10.txt').map(&:strip).map do |line|
   case line
   when /addx (-?\d+)/
@@ -33,6 +35,20 @@ puts "part 1: #{sum_six}"
 # part 2
 
 (0..239).each do |i|
-  putc '.'
   putc "\n" if i % 40 == 0 
+
+  pos = i%40
+  sprite = (register[pos]-1..register[pos]+1)
+  inc = sprite.include?(pos)
+  
+  # puts "sprite: #{sprite}"
+  # puts "Start cycle   #{i+1}: begin executing #{instructions[0]}"
+  # puts "During cycle  #{i+1}: CRT draws pixel in position #{pos}"
+
+  # debugger
+
+
+  putc inc ? '#' : '.'
 end
+
+puts "\n"
