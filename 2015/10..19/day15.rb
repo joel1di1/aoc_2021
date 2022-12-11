@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'byebug'
 require 'json'
 
@@ -7,8 +9,8 @@ ingredient_names = ingredients.keys
 recipes = []
 
 (0..100).map do |i|
-  (0..100-i).map do |j|
-    (0..100-i-j).map do |k|
+  (0..100 - i).map do |j|
+    (0..100 - i - j).map do |k|
       l = 100 - i - j - k
       recipes << [i, j, k, l]
     end
@@ -17,9 +19,9 @@ end
 
 properties_values = recipes.map do |recipe|
   ingredient_names.map do |ingredient|
-    ingredients[ingredient].map do |property, value|
+    ingredients[ingredient].map do |_property, value|
       value * recipe[ingredient_names.index(ingredient)]
-    end 
+    end
   end
 end
 
@@ -31,6 +33,4 @@ end
 
 puts "Part1: #{summed.map { |recipe| recipe[0..3].reduce(:*) }.max}"
 
-
-puts "Part1: #{summed.select{|recipe| recipe[4] == 500}.map { |recipe| recipe[0..3].reduce(:*) }.max}"
-
+puts "Part1: #{summed.select { |recipe| recipe[4] == 500 }.map { |recipe| recipe[0..3].reduce(:*) }.max}"
