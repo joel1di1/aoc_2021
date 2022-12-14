@@ -79,13 +79,14 @@ $monkeys = init_monkeys
 puts $max
 
 10_000.times do |turn|
-  puts "-- turn #{turn}" if turn % 10 == 0
-  if turn % 20 == 0
-    puts($monkeys.map(&:inspected))
-    $monkeys.each do |monkey|
-      pp monkey.items
-    end
-  end
+  now = Time.now
+  # puts "-- turn #{turn}\t#{now.to_i}\t#{now}" if turn % 10 == 0
+  # if turn % 20 == 0
+  #   puts($monkeys.map(&:inspected))
+  #   $monkeys.each do |monkey|
+  #     pp monkey.items
+  #   end
+  # end
   $monkeys.map { |monkey| monkey.turn!(false) }
 end
 puts "Part 2 : #{$monkeys.map(&:inspected).sort.reverse[0..1].inject(&:*)}"
