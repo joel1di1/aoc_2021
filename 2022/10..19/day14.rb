@@ -46,33 +46,41 @@ def draw_map(positions)
   end
 end
 
-def move_sand(positions, x, y)
-  # if we are at the bottom, we stop
-  return :abyss if y == MAX_Y
 
-  # if we are on a rock or sand
-  if positions[[x, y+1]]
+def occupied?(positions, x, y, bottom)
+  (bottom && y == MAX_Y+2) || positions[[x, y]]
+end
+
+def free?(positions, x, y, bottom)
+  !occupied?(positions, x, y, bottom)
+end
+
+def move_sand(positions, x, y, bottom)
+  # if we are at the bottom, we stop
+  return :abyss if !bottom && y == MAX_Y
+  return :top if occupied?(positions, 500, 0, bottom)
+
+  if occupied?(positions, x, y+1, bottom)
     # we try to move left
-    if positions[[x-1, y+1]].nil?
-      move_sand(positions, x-1, y+1)
+    if free?(positions, x-1, y+1, bottom)
+      move_sand(positions, x-1, y+1, bottom)
     # if we can't move left, we try to move right
-    elsif positions[[x+1, y+1]].nil?
-      move_sand(positions, x+1, y+1)
+    elsif free?(positions, x+1, y+1, bottom)
+      move_sand(positions, x+1, y+1, bottom)
     else
       # we mark the current position as sand
-      positions[[x, y]] = :sand
+      positions[[x, y]] = :sand  
       return :sand
     end
   else
     # we move down
-    move_sand(positions, x, y+1)
+    move_sand(positions, x, y+1, bottom)
   end
 end
 
-def produce_sand(positions)
-  move_sand(positions, 500, 0)
+def produce_sand(positions, bottom)
+  move_sand(positions, 500, 0, bottom)
 end
-
 
 # main
 positions = {}
@@ -97,8 +105,30 @@ draw_map(positions)
 # produce sand until it returns :abyss
 # count the number of sand
 sand_count = 0
-while produce_sand(positions) != :abyss
+while produce_sand(positions, false) != :abyss
   sand_count += 1
 end
 
-puts "Sand count: #{sand_count}"
+puts "Part1: #{sand_count}"
+
+draw_map(positions)
+
+
+
+# remove the sand
+positions.delete_if { |_, v| v == :sand }
+
+sand_count = 0
+while produce_sand(positions, true) != :top
+  sand_count += 1
+end
+puts "Part2: #{sand_count}"
+
+draw_map(positions)
+
+
+
+
+
+
+
