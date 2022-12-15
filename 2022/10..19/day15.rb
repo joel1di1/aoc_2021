@@ -139,7 +139,22 @@ class PossibleRow
   def solution_x
     @ranges.find(&:first)&.first
   end
+
+  def sizee
+    @ranges.map(&:size).sum
+  end
 end
+
+row = PossibleRow.new
+sensors.each do |sensor|
+  range = covered_range(map, sensor, possible_y)
+  next if range.nil?
+  # print "removing #{range} \t"
+  possible_row.remove!(range)
+  # pp possible_row
+end
+
+puts "part1: #{row.size}"
 
 (MIN..MAX).each do |possible_y|
   puts "#{Time.now} y: #{possible_y}" if possible_y % 100000 == 0
