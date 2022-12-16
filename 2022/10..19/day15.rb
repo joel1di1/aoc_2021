@@ -140,17 +140,17 @@ class PossibleRow
     @ranges.find(&:first)&.first
   end
 
-  def sizee
+  def size
     @ranges.map(&:size).sum
   end
 end
 
 row = PossibleRow.new
 sensors.each do |sensor|
-  range = covered_range(map, sensor, possible_y)
+  range = covered_range(map, sensor, 2000000)
   next if range.nil?
   # print "removing #{range} \t"
-  possible_row.remove!(range)
+  row.remove!(range)
   # pp possible_row
 end
 
