@@ -26,11 +26,12 @@ class Valve
   end
 end
 
-class Path 
-  attr_reader :closed_valves, :sequence, :remaining_steps, :confirmed_rate
+class Path
+  attr_reader :closed_valves, :sequence, :sequence_el, :remaining_steps, :confirmed_rate
 
-  def initialize(closed_valves:, sequence:, remaining_steps: TOTAL_MINUTES, confirmed_rate:)
+  def initialize(closed_valves:, sequence:, remaining_steps: TOTAL_MINUTES, confirmed_rate:, sequence_el:)
     @sequence = sequence
+    @sequence_el = sequence_el
     @closed_valves = closed_valves
     @remaining_steps = remaining_steps
     @confirmed_rate = confirmed_rate
@@ -58,7 +59,7 @@ class Path
     potential = other.potential_rate <=> self.potential_rate 
     return potential if potential != 0
     
-    other.sequence.to_s <=> self.sequence.to_s
+    other.sequence.to_s + other.sequence_el.to_s <=> self.sequence.to_s + self.sequence_el.to_s
   end
 
   def last
@@ -69,10 +70,26 @@ class Path
     @closed_valves.include?(last)
   end
 
+  def last_el
+    @last_el ||= (@sequence_el[-1].instance_of?(String) ? @sequence_el[-2] : @sequence_el[-1])
+  end
+
+  def last_closed_el?
+    @closed_valves.include?(last)
+  end
+
   def move_to(neighbor)
     Path.new(closed_valves: @closed_valves, 
              sequence: @sequence + [neighbor], 
              remaining_steps: @remaining_steps - 1, 
+             confirmed_rate: @confirmed_rate)
+  end
+
+  # move elephant does not consume time 
+  def move_el_to(neighbor)
+    Path.new(closed_valves: @closed_valves, 
+             sequence_el: @sequence_el + [neighbor], 
+             remaining_steps: @remaining_steps,
              confirmed_rate: @confirmed_rate)
   end
 
@@ -83,8 +100,16 @@ class Path
               confirmed_rate: @confirmed_rate + (last.rate * (@remaining_steps-1)))
   end
 
+  # open elephant does not consume time
+  def open_last_el
+    Path.new(closed_valves: @closed_valves - [last],
+      sequence: @sequence + ["open #{last}"],
+      remaining_steps: @remaining_steps,
+      confirmed_rate: @confirmed_rate + (last.rate * (@remaining_steps)))
+  end
+
   def to_s
-    "Path: #{sequence} - remaining_steps: #{remaining_steps} - confirmed_rate: #{confirmed_rate} - potential_rate: #{potential_rate}"
+    "Path: - remaining_steps: #{remaining_steps} - confirmed_rate: #{confirmed_rate} - potential_rate: #{potential_rate} \n\t#{sequence}\n\t#{sequence_el}"
   end
 
   def inspect
