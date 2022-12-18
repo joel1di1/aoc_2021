@@ -172,7 +172,7 @@ while current_path.remaining_steps > 0
   else
     # if closed neighbor, move to it and open it
     current_path = current_path.move_to(next_neighbor)
-    current_path = current_path.open_last if current_path.remaining_steps > 0
+    current_path = current_path.open_last if current_path.remaining_steps > 0 && current_path.last.rate > 0
   end
 end
 
@@ -196,7 +196,7 @@ while !paths_to_explore.empty? && paths_to_explore.first.potential_rate > best_p
 
   current_path = paths_to_explore.first
   paths_to_explore.delete(current_path)
-  puts "-- exploring #{current_path}"
+  # puts "-- exploring #{current_path}"
   if current_path.remaining_steps == 0 
     # puts "complete path #{current_path}"
     if best_path.nil? || current_path.confirmed_rate > best_path.confirmed_rate
