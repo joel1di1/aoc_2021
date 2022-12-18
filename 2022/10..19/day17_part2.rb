@@ -1,4 +1,5 @@
 require 'byebug'
+require 'set'
 
 class Shape
   shape_minus = {[0,0].freeze => '#', [0,1].freeze => '#', [0,2].freeze => '#', [0,3].freeze => '#'}.freeze
@@ -78,8 +79,6 @@ class Board
     (0..WIDTH-1).each do |y|
       @board[[0,y]] = '-'
     end
-    @board[[0,-1]] = '+'
-    @board[[0,WIDTH]] = '+'
     @current_shape = nil
   end
 
@@ -117,7 +116,6 @@ class Board
   end
 
   def apply_instruction(instruction)
-    # puts "instruction: #{instruction}"
     shift_x = 0
     shift_y = 0
     if instruction == '<'
@@ -126,7 +124,9 @@ class Board
       shift_y = 1
     end
     # check if we can move
-    @current_shape.move(shift_x, shift_y) if @current_shape.next_positions(shift_x, shift_y).all? {|x,y| self[x,y].nil?}
+    if @current_shape.next_positions(shift_x, shift_y).all? { |x,y|  self[x,y].nil? && (y >= 0 && y < WIDTH) }
+      @current_shape.move(shift_x, shift_y) 
+    end
   end
 
   def apply_gravity
@@ -143,6 +143,52 @@ class Board
       @board[[x,y]] = '#'
     end
     @current_shape = nil
+
+    # remove unused points
+    points_to_keep = Set.new
+
+    # get the highest point on column WIDTH-1
+    target_y = WIDTH-1
+    target_x = @board.keys.select{|x, y| y == target_y}.map(&:first).min
+    
+    # get the highest point on column 0
+    current_x = @board.keys.select{|x, y| y == 0}.map(&:first).min
+    current_y = 0
+    
+    points_to_keep << [current_x, current_y]
+
+    direction = :north
+
+    moves = {
+      north: { coords_left: [0,-1], coords_right: [0,1], coords_front: [-1,0],  coords_back: [1,0], left: :west, right: :east, front: :north, back: :south },
+      south: { coords_left: [0,1], coords_right: [0,-1], coords_front: [1,0],  coords_back: [-1,0], left: :east, right: :west, front: :south, back: :north },
+      east: { coords_left: [-1,0], coords_right: [1,0], coords_front: [0,1],  coords_back: [0,-1], left: :north, right: :south, front: :east, back: :west },
+      west: { coords_left: [1,0], coords_right: [-1,0], coords_front: [0,-1],  coords_back: [0,1], left: :south, right: :north, front: :west, back: :east}
+    }
+
+    while current_x != target_x || current_y != target_y
+      # try to turn left
+      if @board[[current_x + moves[direction][:coords_left][0], current_y + moves[direction][:coords_left][1]]]
+        next_position = moves[direction][:coords_left] 
+        next_direction = moves[direction][:left]
+      elsif @board[[current_x + moves[direction][:coords_front][0], current_y + moves[direction][:coords_front][1]]]
+        next_position = moves[direction][:coords_front]
+        next_direction = moves[direction][:front]
+      elsif @board[[current_x + moves[direction][:coords_right][0], current_y + moves[direction][:coords_right][1]]]
+        next_position = moves[direction][:coords_right]
+        next_direction = moves[direction][:right]
+      else
+        next_position = moves[direction][:coords_back]
+        next_direction = moves[direction][:back]
+      end
+
+      current_x += next_position[0]
+      current_y += next_position[1]
+      points_to_keep << [current_x, current_y]
+      direction = next_direction
+    end
+
+    @board = @board.select{|k,v| points_to_keep.include?(k)}
   end
 
   def freezed?
@@ -162,19 +208,14 @@ def find_max_x(nb_shapes)
       board.add_new_shape 
     end
   
-    # puts "\n------------------"
-    if turn % 10_000 == 0
-      puts "turn #{turn+1}"
-      # board.display
-    end
-  
-    board.apply_instruction(instructions[turn%instructions.size])
-    # puts "after instruction: #{instructions[turn%instructions.size]}"
-    # board.display
+    instruction = instructions[turn%instructions.size]
+    puts "\n================= turn #{turn+1} : #{instruction} ==============="
+
+    board.apply_instruction(instruction)
+    board.display
   
     board.apply_gravity
-    # puts "after gravity"
-    # board.display
+    board.display
   
     turn += 1
   end
@@ -182,6 +223,15 @@ def find_max_x(nb_shapes)
   -board.top_x
 end
 
-puts "part 1: #{find_max_x(2022)} expected 3117"
+part1= find_max_x(2023)
+puts "part 1: #{part1} expected 3117"
+# puts "-- ERROR --" if part1 != 3117
 
-board.display
+# part2= find_max_x(1000000000000)
+# puts "part 2: #{part2}"
+
+
+
+# ##
+# # 10091 instructions
+# # 
