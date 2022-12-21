@@ -367,6 +367,19 @@ assert_eq 40, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequ
 assert_eq 70, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequence: [test_valves['C']], remaining_steps: 4, confirmed_rate: 0).potential_rate
 
 
+mh = MaxHeap
+10_000.times do
+  mh.push(Random.rand(100))
+end
+
+cur = mh.pop
+while !mh.empty?
+  next_val = mh.pop
+  assert cur >= next_val
+  cur = next_val
+end
+
+
 # # A* algorithm
 paths_to_explore = MaxHeap.new
 
