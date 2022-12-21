@@ -1,7 +1,8 @@
 require 'byebug'
 require 'set'
+require_relative '../../fwk'
 
-TOTAL_MINUTES = 26
+TOTAL_MINUTES = 30
 
 class MaxHeap
   def initialize
@@ -120,14 +121,15 @@ class Valve
 end
 
 class Path
-  attr_reader :closed_valves, :sequence, :sequence_el, :remaining_steps, :confirmed_rate
+  attr_reader :closed_valves, :sequence, :remaining_steps, :confirmed_rate
 
-  def initialize(closed_valves:, sequence:, remaining_steps: TOTAL_MINUTES, confirmed_rate:, sequence_el:)
+  def initialize(closed_valves:, sequence:, remaining_steps: TOTAL_MINUTES, confirmed_rate:)
     @sequence = sequence
-    @sequence_el = sequence_el
     @closed_valves = closed_valves
     @remaining_steps = remaining_steps
     @confirmed_rate = confirmed_rate
+
+    debugger if !valid?
   end
 
   def potential_rate
@@ -144,15 +146,12 @@ class Path
     local_remaining_steps = remaining_steps
 
     distance_min_me = distance_to_nearest_closed_valve(last)
-    distance_min_el = distance_to_nearest_closed_valve(last_el)
 
-    i = local_remaining_steps - [distance_min_me, distance_min_el].min
+    i = local_remaining_steps - distance_min_me
     while i > 0
       # I take the first rate
       remaining_rate += (sorted_rate.shift || 0) * (i-1)
-      # elephant takes the second rate
-      remaining_rate += (sorted_rate.shift || 0) * (i-1)
-      i -= 1
+      i -= 2
     end
 
     remaining_rate
@@ -179,52 +178,23 @@ class Path
     @closed_valves.include?(last)
   end
 
-  def last_el
-    @last_el ||= (@sequence_el[-1].instance_of?(String) ? @sequence_el[-2] : @sequence_el[-1])
-  end
-
-  def last_closed_el?
-    @closed_valves.include?(last_el)
-  end
-
   def move_to(neighbor)
     Path.new(closed_valves: @closed_valves, 
              sequence: @sequence + [neighbor], 
-             sequence_el: @sequence_el,
              remaining_steps: @remaining_steps - 1, 
-             confirmed_rate: @confirmed_rate)
-  end
-
-  # move elephant does not consume time 
-  def move_el_to(neighbor)
-    Path.new(closed_valves: @closed_valves, 
-             sequence_el: @sequence_el + [neighbor], 
-             sequence: @sequence,
-             remaining_steps: @remaining_steps,
              confirmed_rate: @confirmed_rate)
   end
 
   def open_last
     Path.new(closed_valves: @closed_valves - [last],
-              sequence: @sequence + ["open #{last}"],
-              sequence_el: @sequence_el,
+              sequence: @sequence + ["#{last}"],
               remaining_steps: @remaining_steps - 1,
               confirmed_rate: @confirmed_rate + (last.rate * (@remaining_steps-1)))
-  end
-
-  # open elephant does not consume time
-  def open_last_el
-    Path.new(closed_valves: @closed_valves - [last_el],
-      sequence: @sequence,
-      sequence_el: @sequence_el + ["open #{last_el}"],
-      remaining_steps: @remaining_steps,
-      confirmed_rate: @confirmed_rate + (last_el.rate * (@remaining_steps)))
   end
 
   def to_s
     "Path: - remaining_steps: #{remaining_steps} - confirmed_rate: #{confirmed_rate} - potential_rate: #{potential_rate}"\
     "\nme(#{sequence.length})\t#{sequence}"\
-    "\nel(#{sequence_el.length})\t#{sequence_el}"
   end
 
   def inspect
@@ -239,9 +209,6 @@ class Path
       if sequence[i]&.instance_of?(String)
         current_rate += sequence[i-1].rate
       end
-      if sequence_el[i]&.instance_of?(String)
-        current_rate += sequence_el[i-1].rate
-      end
     end
 
     total_pressure == confirmed_rate
@@ -250,24 +217,16 @@ class Path
   def valid_total_rate
     current_rate = 0
     total_pressure = 0
-    sequence.each_with_index.map do |valve, i|
-      print "Minutes #{i}\t#{valve}\t#{sequence_el[i]}\t"
+    puts "Minutes\tValve\tRate\tTotal\tNew_rate"
+    (0..TOTAL_MINUTES).each do |i|
+      valve = sequence[i]
       total_pressure += current_rate
-      print "\tcurrent_rate\t#{current_rate}\ttotal_pressure\t#{total_pressure}\t"
-      if valve.instance_of?(String)
+      print "#{i}\t#{valve}\t#{current_rate}\t#{total_pressure}\t"
+      if valve&.instance_of?(String)
         current_rate += sequence[i-1].rate
-        print(sequence[i-1].rate)
-      else
-        print(0)
+        print "#{sequence[i-1].rate}"
       end
-      print "\t"
-      if sequence_el[i].instance_of?(String)
-        current_rate += sequence_el[i-1].rate
-        print(sequence_el[i-1].rate)
-      else
-        print(0)
-      end
-      print "\n"
+      puts
     end
 
     puts "Total pressure: #{total_pressure} - confirmed_rate: #{confirmed_rate} - #{total_pressure == confirmed_rate ? 'OK' : 'KO'}"
@@ -296,31 +255,7 @@ class Path
       tmp << self.move_to(neighbor)
     end
 
-    tmp2 = []
-    # add paths with elephant
-    tmp.each do |tmp_path|
-      if tmp_path.last_closed_el?
-        tmp2 << tmp_path.open_last_el
-      end
-
-      # all valves that would lead to useless cycles are removed
-      tmp_index = sequence_el.length - 1
-      last_valve = sequence_el[tmp_index]
-      useless_valves = Set.new
-      loop do
-        break if last_valve.instance_of?(String)
-        useless_valves << last_valve
-        tmp_index -= 1
-        break if tmp_index < 0
-        last_valve = sequence_el[tmp_index]
-      end
-
-      tmp_path.last_el.neighbors.reject{|n| useless_valves.include?(n) }.each do |neighbor|
-        tmp2 << tmp_path.move_el_to(neighbor)
-      end
-    end
-
-    tmp2.select{|path| path.potential_rate > $best_path.confirmed_rate }
+    tmp.select{|path| path.potential_rate > $best_path.confirmed_rate }
   end
 
   def distance_to_nearest_closed_valve(start_valve)
@@ -387,11 +322,13 @@ valve_aa = valves['AA']
 
 # marked valves with rate 0 as closed
 closed_valves = valves.values.select{|v| v.rate > 0}.freeze
+puts "closed_valves: #{closed_valves.length}"
 
 $best_path = nil
-10000.times do 
+
+def greedy(closed_valves, valve_aa)
   # greedy algorithm
-  current_path = Path.new(closed_valves: closed_valves - [valve_aa], sequence: [valve_aa], sequence_el: [valve_aa], remaining_steps: TOTAL_MINUTES, confirmed_rate: 0)
+  current_path = Path.new(closed_valves: closed_valves, sequence: [valve_aa], remaining_steps: TOTAL_MINUTES, confirmed_rate: 0)
 
   while current_path.remaining_steps > 0
     # move me
@@ -404,28 +341,35 @@ $best_path = nil
       next_neighbor ||= current_path.last.neighbors.sample
       current_path = current_path.move_to(next_neighbor)
     end
-
-    # move elephant
-    if current_path.last_closed_el?
-      current_path = current_path.open_last_el
-    else
-      # if current valve is open, move to max rated neighbor
-      next_neighbor = current_path.last_el.neighbors.select { |n| current_path.closed_valves.include?(n) }.sort_by(&:rate).last
-      next_neighbor ||= current_path.last_el.neighbors.sample
-      current_path = current_path.move_el_to(next_neighbor)
-    end
   end
+  current_path
+end
 
+
+100.times do 
+  current_path = greedy(closed_valves, valve_aa)
   $best_path = current_path if $best_path.nil? || current_path.confirmed_rate > $best_path.confirmed_rate
 end
 
 puts "greedy: #{$best_path}"
-puts "\tvalidation:"
-$best_path.valid_total_rate
+# puts "\tvalidation:"
+# $best_path.valid_total_rate
 
+# test potential rate
+# test_valves = [Valve.new('A', 10), Valve.new('B', 20), Valve.new('C', 30)].map{|v| [v.name, v]}.to_h
+# assert_eq 56, Path.new(closed_valves: [test_valves['B']], sequence: [test_valves['C']], remaining_steps: 0, confirmed_rate: 56).potential_rate
+# assert_eq 56, Path.new(closed_valves: [test_valves['B']], sequence: [test_valves['C']], remaining_steps: 1, confirmed_rate: 56).potential_rate
+# assert_eq 76, Path.new(closed_valves: [test_valves['B']], sequence: [test_valves['C']], remaining_steps: 2, confirmed_rate: 56).potential_rate
+# assert_eq 56, Path.new(closed_valves: [], sequence: [test_valves['C']], remaining_steps: 200, confirmed_rate: 56).potential_rate
+# assert_eq 20, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequence: [test_valves['C']], remaining_steps: 2, confirmed_rate: 0).potential_rate
+# assert_eq 40, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequence: [test_valves['C']], remaining_steps: 3, confirmed_rate: 0).potential_rate
+# assert_eq 70, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequence: [test_valves['C']], remaining_steps: 4, confirmed_rate: 0).potential_rate
+
+
+# # A* algorithm
 paths_to_explore = MaxHeap.new
 
-start = Path.new(closed_valves: closed_valves - [valve_aa], sequence: [valve_aa], sequence_el: [valve_aa], remaining_steps: TOTAL_MINUTES, confirmed_rate: 0)
+start = Path.new(closed_valves: closed_valves, sequence: [valve_aa], remaining_steps: TOTAL_MINUTES, confirmed_rate: 0)
 paths_to_explore << start
 
 iter = 0
@@ -435,7 +379,7 @@ while !paths_to_explore.empty?
   # end
   
   current_path = paths_to_explore.pop
-  if iter % 10_000 == 0
+  if iter % 1_000 == 0
     puts "iter: #{iter}, paths to explore: #{paths_to_explore.size}, $best_path: #{$best_path.confirmed_rate}" 
     puts "-- exploring #{current_path}"
   end
