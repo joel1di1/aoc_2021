@@ -356,14 +356,14 @@ puts "greedy: #{$best_path}"
 # $best_path.valid_total_rate
 
 # test potential rate
-# test_valves = [Valve.new('A', 10), Valve.new('B', 20), Valve.new('C', 30)].map{|v| [v.name, v]}.to_h
-# assert_eq 56, Path.new(closed_valves: [test_valves['B']], sequence: [test_valves['C']], remaining_steps: 0, confirmed_rate: 56).potential_rate
-# assert_eq 56, Path.new(closed_valves: [test_valves['B']], sequence: [test_valves['C']], remaining_steps: 1, confirmed_rate: 56).potential_rate
-# assert_eq 76, Path.new(closed_valves: [test_valves['B']], sequence: [test_valves['C']], remaining_steps: 2, confirmed_rate: 56).potential_rate
-# assert_eq 56, Path.new(closed_valves: [], sequence: [test_valves['C']], remaining_steps: 200, confirmed_rate: 56).potential_rate
-# assert_eq 20, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequence: [test_valves['C']], remaining_steps: 2, confirmed_rate: 0).potential_rate
-# assert_eq 40, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequence: [test_valves['C']], remaining_steps: 3, confirmed_rate: 0).potential_rate
-# assert_eq 70, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequence: [test_valves['C']], remaining_steps: 4, confirmed_rate: 0).potential_rate
+test_valves = [Valve.new('A', 10), Valve.new('B', 20), Valve.new('C', 30)].map{|v| [v.name, v]}.to_h
+assert_eq 56, Path.new(closed_valves: [test_valves['B']], sequence: [test_valves['C']], remaining_steps: 0, confirmed_rate: 56).potential_rate
+assert_eq 56, Path.new(closed_valves: [test_valves['B']], sequence: [test_valves['C']], remaining_steps: 1, confirmed_rate: 56).potential_rate
+assert_eq 76, Path.new(closed_valves: [test_valves['B']], sequence: [test_valves['C']], remaining_steps: 2, confirmed_rate: 56).potential_rate
+assert_eq 56, Path.new(closed_valves: [], sequence: [test_valves['C']], remaining_steps: 200, confirmed_rate: 56).potential_rate
+assert_eq 20, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequence: [test_valves['C']], remaining_steps: 2, confirmed_rate: 0).potential_rate
+assert_eq 40, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequence: [test_valves['C']], remaining_steps: 3, confirmed_rate: 0).potential_rate
+assert_eq 70, Path.new(closed_valves: [test_valves['B'], test_valves['A']], sequence: [test_valves['C']], remaining_steps: 4, confirmed_rate: 0).potential_rate
 
 
 # # A* algorithm
