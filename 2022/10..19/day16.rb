@@ -129,33 +129,9 @@ class Path
     @remaining_steps = remaining_steps
     @confirmed_rate = confirmed_rate
 
-    debugger if !valid?
+    # debugger if !valid?
   end
 
-  def potential_rate
-    @potential_rate ||= @confirmed_rate + max_remaining_rate
-  end
-
-  def >=(other)
-    (self <=> other) >= 0
-  end
-
-  def max_remaining_rate
-    sorted_rate = @closed_valves.map(&:rate).sort.reverse
-    remaining_rate = 0
-    local_remaining_steps = remaining_steps
-
-    distance_min_me = distance_to_nearest_closed_valve(last)
-
-    i = local_remaining_steps - distance_min_me
-    while i > 0
-      # I take the first rate
-      remaining_rate += (sorted_rate.shift || 0) * (i-1)
-      i -= 2
-    end
-
-    remaining_rate
-  end
 
   def <=>(other)
     comp = self.potential_rate <=> other.potential_rate 
@@ -168,6 +144,10 @@ class Path
     return -comp if comp != 0
 
     Random.rand(-1..1)
+  end
+
+  def >=(other)
+    (self <=> other) >= 0
   end
 
   def last
@@ -212,6 +192,27 @@ class Path
     end
 
     total_pressure == confirmed_rate
+  end
+
+  def potential_rate
+    @potential_rate ||= @confirmed_rate + max_remaining_rate
+  end
+
+  def max_remaining_rate
+    sorted_rate = @closed_valves.map(&:rate).sort.reverse
+    remaining_rate = 0
+    local_remaining_steps = remaining_steps
+
+    distance_min_me = distance_to_nearest_closed_valve(last)
+
+    i = local_remaining_steps - distance_min_me
+    while i > 0
+      # I take the first rate
+      remaining_rate += (sorted_rate.shift || 0) * (i-1)
+      i -= 2
+    end
+
+    remaining_rate
   end
 
   def valid_total_rate
