@@ -1,0 +1,15 @@
+@root = -> { $iter +=1 and ( @pppw.call + @sjmn.call ) }
+@dbpl = -> { $iter +=1 and ( 5 ) }
+@cczh = -> { $iter +=1 and ( @sllz.call + @lgvd.call ) }
+@zczc = -> { $iter +=1 and ( 2 ) }
+@ptdq = -> { $iter +=1 and ( @humn.call - @dvpt.call ) }
+@dvpt = -> { $iter +=1 and ( 3 ) }
+@lfqf = -> { $iter +=1 and ( 4 ) }
+@humn = -> { $iter +=1 and ( 5 ) }
+@ljgn = -> { $iter +=1 and ( 2 ) }
+@sjmn = -> { $iter +=1 and ( @drzm.call * @dbpl.call ) }
+@sllz = -> { $iter +=1 and ( 4 ) }
+@pppw = -> { $iter +=1 and ( @cczh.call / @lfqf.call ) }
+@lgvd = -> { $iter +=1 and ( @ljgn.call * @ptdq.call ) }
+@drzm = -> { $iter +=1 and ( @hmdt.call - @zczc.call ) }
+@hmdt = -> { $iter +=1 and ( 32 ) }
