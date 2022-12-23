@@ -23,6 +23,10 @@ class Heap
     bubble_up(@heap.length - 1)
   end
 
+  def <<(element)
+    push(element)
+  end
+
   def pop
     swap(0, @heap.length - 1)
     min = @heap.pop
@@ -32,6 +36,10 @@ class Heap
 
   def peek
     @heap[0]
+  end
+
+  def empty?
+    @heap.empty?
   end
 
   private
@@ -91,6 +99,8 @@ class MinHeap < Heap
 end
 
 class HeapElement
+  attr_reader :value, :priority
+
   def initialize(value, priority)
     @value = value
     @priority = priority
@@ -125,7 +135,7 @@ def dijkstra(start_node, end_node)
 
   # Create a priority queue to store the nodes that need to be processed
   # The priority queue will be sorted by the distance from the start node
-  pq = MinHeap.new
+  pq = PriorityQueue.new
 
   # Add the start node to the priority queue with a distance of 0
   pq.push(start_node, 0)
@@ -142,6 +152,7 @@ def dijkstra(start_node, end_node)
     visited.add(current_node)
 
     # For each neighbor of the current node
+    debugger if current_node.is_a?(String)
     current_node.neighbors.each do |neighbor|
       # If the neighbor has not been visited
       if !visited.include?(neighbor)
@@ -149,6 +160,7 @@ def dijkstra(start_node, end_node)
         neighbor_distance = distance + current_node.cost(neighbor)
 
         # Add the neighbor to the priority queue with the calculated distance
+        debugger if neighbor.is_a?(String)
         pq.push(neighbor, neighbor_distance)
       end
     end
@@ -156,4 +168,23 @@ def dijkstra(start_node, end_node)
 
   # If the end node was not reached, return nil
   nil
+end
+
+class PriorityQueue
+  def initialize
+    @min_heap = MinHeap.new
+  end
+
+  def push(element, priority)
+    @min_heap << HeapElement.new(element, priority)
+  end
+
+  def pop
+    element = @min_heap.pop
+    [element.value, element.priority]
+  end
+
+  def empty?
+    @min_heap.empty?
+  end
 end
