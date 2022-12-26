@@ -25,12 +25,13 @@ class Map
 
   def self.from_file(file)
     map = Map.new
-    char_index = 65
+    char_index = 0
     File.readlines(file).map(&:chomp).each_with_index.map do |line, x|
       line.chars.each_with_index.map do |char, y|
         # debugger if char == '#'
         if char == '#'
-          map[x, y] = Cell.new(x, y, char_index.chr(Encoding::UTF_8), map) 
+          
+          map[x, y] = Cell.new(x, y, ((char_index % (126-33) )+ 33).chr, map) 
           char_index += 1
         end
       end
@@ -39,7 +40,7 @@ class Map
   end
 
   def display
-    puts "============================================================================================================================\n"
+    # puts "============================================================================================================================\n"
     # find minmax of x and y
     min_x, max_x = @hashmap.keys.map(&:first).minmax
     min_y, max_y = @hashmap.keys.map(&:last).minmax
@@ -47,7 +48,7 @@ class Map
     (min_x..max_x).each do |x|
       (min_y..max_y).each do |y|
         cell = @hashmap[[x, y]]
-        print( cell ? '#' :  '.')
+        print( cell ? cell.char :  '.')
         if cell
           raise "cell #{cell.char} is not at #{x}, #{y}" unless cell.x == x && cell.y == y
         end
@@ -68,37 +69,29 @@ class Map
   def play_round
     proposition_map = {}
     @hashmap.values.each do |cell|
+      # debugger if cell.for_debug
       proposition = cell.propose
       proposition_map[proposition] ||= []
       proposition_map[proposition] << cell
     end
 
-    # select the ones with only one cell and move it
-    proposition_map.map do |proposition, cells|
+    results = proposition_map.map do |proposition, cells|
       if cells.size > 1
         cells.map(&:stay!)
-        0
       else
-        cells.map(&:move!).sum
+        cells.map(&:move!)
       end
-    end.sum
+    end.flatten.group_by(&:itself).map { |k, v| [k, v.count] }.to_h
+    # puts "\t#{results}"
+    results[:moved] || 0
   end 
-
-  def play
-    iter = 0
-    loop do
-      iter += 1
-      puts "round: #{iter}"
-      break if play_round == 0
-    end
-    puts "\n\tPart2: #{iter}"
-  end
 end
 
 class Cell
-  attr_reader :x, :y, :char
+  attr_reader :x, :y, :char, :for_debug
 
   def initialize(x, y, char, map)
+    @for_debug = char == '4' && x == 5
     @x = x
     @y = y
     @char = char
@@ -110,13 +103,13 @@ class Cell
       west:  -> (x, y) { [x, y-1] if [[x-1, y-1], [x, y-1], [x+1, y-1]].all? { |x, y| @map[x, y].nil? } },
       east:  -> (x, y) { [x, y+1] if [[x-1, y+1], [x, y+1], [x+1, y+1]].all? { |x, y| @map[x, y].nil? } },
     }
-  
   end
 
   def propose
     # if all neighbours are empty, don't move
     if [[@x-1, @y-1], [@x-1, @y], [@x-1, @y+1], [@x, @y-1], [@x, @y+1], [@x+1, @y-1], [@x+1, @y], [@x+1, @y+1]].all? { |x, y| @map[x, y].nil? }
-      @last_proposition = [x, y] 
+      @last_proposition = [@x, @y] 
+
       return @last_proposition
     end
 
@@ -136,7 +129,9 @@ class Cell
   def stay!
     # puts "\t#{char} staying"
     @propositions.rotate!
-    0
+    :stayed
+  ensure
+    @last_proposition = nil
   end
 
   def move!
@@ -145,29 +140,36 @@ class Cell
     # puts "\t#{char} moving to #{@last_proposition}"
     @propositions.rotate!
 
-    return 0 if [@x, @y] == @last_proposition
+    return :no_move if [@x, @y] == @last_proposition
 
     @map.delete(@x, @y)
     @map[*@last_proposition] = self
 
     @x, @y = @last_proposition
-    1
+    :moved
+  ensure
+    @last_proposition = nil
   end
 end
 
-map = Map.from_file('day23.txt')
-puts "Initial size: #{map.size}"
+# map = Map.from_file('day23.txt')
 # map.display
-9.times do |i|
-  map.play_round
-  puts "Round #{i+1}"
-  # map.display
-end
+# 10.times do |i|  
+#   puts "\nRound #{i+1}"
+#   map.play_round
+#   map.display
+# end
 
-puts "Part 1: #{map.ground_tiles_count}"
-puts "Initial size: #{map.size}"
+# puts "\n\n=> Part 1: #{map.ground_tiles_count}"
 
 # part 2
 map = Map.from_file('day23.txt')
 
-map.play
+iter = 0
+loop do
+  iter += 1
+  map.display
+  puts "Round #{iter}:"
+  break if map.play_round == 0
+end
+puts "\n\tPart2: #{iter}"
