@@ -194,17 +194,14 @@ class Board
     # puts "points to keep : #{points_to_keep.size}"
     @board = @board.select{|k,v| points_to_keep.include?(k)}
 
-    # display if Shape.index_shape == 123 or 88
-    display if Shape.index_shape == 123 || Shape.index_shape == 88
-
-    return if true || @fast_forward
+    return if @fast_forward
 
     # cache the result downed to 0
     positions = @board.keys
     min_x, max_x = positions.map(&:first).minmax
     positions = positions.map{|x,y| [x-max_x, y]}
 
-    cache_key = "#{positions} - #{Shape.index_shape % Shape::ORDERED_SHAPES.size}"
+    cache_key = "#{positions} - #{Shape.index_shape % Shape::ORDERED_SHAPES.size} - #{$turn_mod_instructions_size}}"
     if @cache_to_keep[cache_key]
       cached = @cache_to_keep[cache_key]
       puts "already in cache"
@@ -246,19 +243,17 @@ def find_max_x(nb_shapes, clean: false)
     if board.freezed?
       # check if max number of shapes
       break if Shape.index_shape >= nb_shapes
-      # puts "================= new shape #{Shape.index_shape} ==============="
       board.add_new_shape 
-      # board.display
+      # if Shape.index_shape % 100 == 0
+      #   puts "================= new shape #{Shape.index_shape} ===============" 
+      #   board.display
+      # end
     end
   
-    instruction = instructions[turn%instructions.size]
-    puts "\n================= turn #{turn+1} : #{instruction} ===============" if turn % 50 == 0
-
+    $turn_mod_instructions_size = turn % instructions.size
+    instruction = instructions[$turn_mod_instructions_size]
     board.apply_instruction(instruction)
-    # board.display if Shape.index_shape == 511
-  
     board.apply_gravity(clean:)
-    # board.display if Shape.index_shape == 511
 
     if fast_forward.nil? && board.fast_forward 
       fast_forward = board.fast_forward
@@ -295,26 +290,5 @@ puts "part 1 cleaned : #{part1_clean} expected 3117"
 
 puts "-- ERROR --" if part1_clean != 3117
 
-# part2= find_max_x(1_000_000_000_000)
-# puts "part 2: #{part2}"
-
-
-
-# ##
-# # 10091 instructions
-# # 
-
-
-# 1 => 0, -13
-# 2 => -2, -15
-# 3 => -4, -17
-# ...
-# 10 = > -12, -25
-
-# # 2 and 10 are the same
-# # between 2 an 10, it adds 8 shapes, it adds 10 to height
-# # to get the 30th shape, we need to add 2 more cycles, meaning 20 more shapes
-# # so we reach 26th shape
-# # then finish to add the last shapes
-
-# 26 => -32, -45
+part2= find_max_x(1_000_000_000_000, clean: true)
+puts "part 2: #{part2}"
