@@ -260,7 +260,7 @@ def find_max_x(nb_shapes, clean: false)
     board.apply_gravity(clean:)
     # board.display if Shape.index_shape == 511
 
-    if false && fast_forward.nil? && board.fast_forward 
+    if fast_forward.nil? && board.fast_forward 
       fast_forward = board.fast_forward
       # number of shapes to do before nb_shapes
       nb_shapes_to_do = nb_shapes - Shape.index_shape
