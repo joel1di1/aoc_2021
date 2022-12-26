@@ -36,7 +36,6 @@ class Shape
 
   def self.next
     new_shape = ORDERED_SHAPES[@@index_shape % ORDERED_SHAPES.size].keys.map(&:dup)
-    # puts "new shape: #{new_shape}"
     @@index_shape += 1
     self.new(new_shape)
   end
@@ -103,7 +102,6 @@ class Board
 
     puts
     ((min_x-3)..max_x).each do |x|
-        # print line number
         print(x.to_s.rjust(5))
         print(" ")
       (min_y..max_y).each do |y|
@@ -139,29 +137,27 @@ class Board
     end
   end
 
-  def apply_gravity(clean:)
+  def apply_gravity
     # check if we can move
     if @current_shape.next_positions(1, 0).all? {|x,y| self[x,y].nil?}
       @current_shape.push_down
     else
-      freeze!(clean:)
+      freeze!
     end
   end
 
-  def freeze!(clean:)
+  def freeze!
     @current_shape.positions.each do |x,y|
       @board[[x,y]] = '#'
     end
     @current_shape = nil
 
-    remove_unused_points! if clean
+    remove_unused_points!
   end
 
   def remove_unused_points!
-    # display if Shape.index_shape == 511
     points_to_keep = Set.new
 
-    # debugger if Shape.index_shape == 511
     # get the highest point on column WIDTH-1
     target_y = WIDTH-1
     target_x = @board.keys.select{|x, y| y == target_y}.map(&:first).min
@@ -191,7 +187,6 @@ class Board
       end
     end
 
-    # puts "points to keep : #{points_to_keep.size}"
     @board = @board.select{|k,v| points_to_keep.include?(k)}
 
     return if @fast_forward
@@ -204,13 +199,7 @@ class Board
     cache_key = "#{positions} - #{Shape.index_shape % Shape::ORDERED_SHAPES.size} - #{$turn_mod_instructions_size}}"
     if @cache_to_keep[cache_key]
       cached = @cache_to_keep[cache_key]
-      puts "already in cache"
-      puts "index_shape : #{Shape.index_shape}, min_x : #{min_x}, max_x : #{max_x}"
-      puts "cached, index_shape : #{cached[0]}, min_x : #{cached[1][0]}, max_x : #{cached[1][1]}"
 
-
-      # fast forward until tun before 1_000_000_000_000
-      # debugger
       @fast_forward = {
         index_shape: Shape.index_shape,
         min_x: min_x,
@@ -231,7 +220,7 @@ class Board
   end
 end
 
-def find_max_x(nb_shapes, clean: false)
+def find_max_x(nb_shapes)
   instructions = File.readlines('day17.txt').first.strip.chars
 
   Shape.reset!
@@ -244,16 +233,12 @@ def find_max_x(nb_shapes, clean: false)
       # check if max number of shapes
       break if Shape.index_shape >= nb_shapes
       board.add_new_shape 
-      # if Shape.index_shape % 100 == 0
-      #   puts "================= new shape #{Shape.index_shape} ===============" 
-      #   board.display
-      # end
     end
   
     $turn_mod_instructions_size = turn % instructions.size
     instruction = instructions[$turn_mod_instructions_size]
     board.apply_instruction(instruction)
-    board.apply_gravity(clean:)
+    board.apply_gravity
 
     if fast_forward.nil? && board.fast_forward 
       fast_forward = board.fast_forward
@@ -272,23 +257,9 @@ def find_max_x(nb_shapes, clean: false)
     turn += 1
   end
   
-  # board.display
-
-  # cycles x diff between min_x and cached_min_x
   skipped = fast_forward.nil? ? 0 : nb_skipped_cycles * fast_forward[:min_x_diff]
-
   -(board.top_x + skipped)
 end
 
-# puts "================= clean false ==============="
-# part1= find_max_x(2022, clean: false)
-# puts "part 1: #{part1} expected 3117"
-
-puts "================= clean true ==============="
-part1_clean= find_max_x(2022, clean: true)
-puts "part 1 cleaned : #{part1_clean} expected 3117"
-
-puts "-- ERROR --" if part1_clean != 3117
-
-part2= find_max_x(1_000_000_000_000, clean: true)
-puts "part 2: #{part2}"
+puts "part 1: #{find_max_x(2022)}"
+puts "part 2: #{find_max_x(1_000_000_000_000)}"
