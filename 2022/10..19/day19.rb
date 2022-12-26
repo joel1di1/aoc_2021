@@ -1,3 +1,7 @@
+### term : 1 old code, real data
+### term : 2 new code, sample data
+### term : 3 old code, sample data
+
 require 'byebug'
 require 'set'
 require_relative '../../fwk'
@@ -28,6 +32,8 @@ end
 class Sequence
   attr_reader :bots, :resources, :sequence
 
+  @@cache = {}
+
   def initialize(blueprint, 
                  bots = {ore: 1, clay: 0, obsidian: 0, geode: 0}, 
                  resources = {ore: 0, clay: 0, obsidian: 0, geode: 0},
@@ -42,7 +48,7 @@ class Sequence
     "length: #{@sequence.length}, "\
     "sequence: #{@sequence.map { |choice| (INDEX_TO_RESOURCE[choice] || "--")[0..1] }.join(",")} "\
     "potential_geodes: #{potential_geodes},"\
-    "resources: #{@resources}, bots: #{@bots}, weight: #{weight}"
+    "resources: #{@resources}, bots: #{@bots}"
   end
 
   def geodes
@@ -60,14 +66,12 @@ class Sequence
     return true if bot_to_build.nil?
 
     # check if we have enough resources
-    return false if @blueprint.blueprint[bot_to_build].any? { |resource, needed_amount| @resources[resource] < needed_amount }
-    true
-    # !previous_choice_is_nil_but_we_had_enough_resources_to_build_the_bot(bot_to_build)
+    @blueprint.blueprint[bot_to_build].all? { |resource, needed_amount| @resources[resource] >= needed_amount }
   end
 
-  def previous_choice_is_nil_but_we_had_enough_resources_to_build_the_bot(bot_to_build)
+  def could_have_build_last_turn(next_choice)
     @sequence.last.nil? && 
-      @blueprint.blueprint[bot_to_build].all? { |resource, needed_amount| @resources[resource] >= needed_amount + @bots[resource] }
+      @blueprint.blueprint[INDEX_TO_RESOURCE[next_choice]].all? { |resource, needed_amount| @resources[resource] >= needed_amount + @bots[resource] }
   end
 
   # returns a new sequence if it's possible, nil otherwise
@@ -75,6 +79,7 @@ class Sequence
   def next_sequence(next_choice)
     # check if it's possible
     return nil unless possible?(next_choice)
+    return nil if next_choice && could_have_build_last_turn(next_choice)
 
     # construct new sequence
     new_bots = deep_dup(@bots)
@@ -107,8 +112,6 @@ class Sequence
   end
 
   def next_sequences
-    return [] if @sequence.length >= MINUTES
-    return [] if $best_sequence && potential_geodes <= $best_sequence.geodes
     return [] if potential_geodes == 0
 
     [nil,0,1,2,3].map do |next_choice|
@@ -118,10 +121,6 @@ class Sequence
 
   def length
     @sequence.length
-  end
-
-  def weight
-    @weight ||= @sequence.map { |choice| choice || 0 }.join
   end
 
   def <=>(other)
@@ -134,49 +133,85 @@ class Sequence
   end
 
   def potential_geodes
-    @resources[:geode] + 
-      (@bots[:geode] * (MINUTES - @sequence.length)) + 
-      (0..[MINUTES - 1 - @sequence.length,0].max).inject(:+)
+    potential(:geode)
+  end
+
+  def time_to_get_resource(resource, amount)
+    remaining_amount = amount - @resources[resource]
+
+    additional_bots = 0
+    while remaining_amount > 0
+      remaining_amount -= @bots[resource] + additional_bots
+      additional_bots += 1
+    end
+    additional_bots
+  end
+
+  def time_to_first_bot(resource)
+    return 0 if @bots[resource] > 0
+
+    @blueprint.blueprint[resource].map do |resource, amount|
+      time_to_get_resource(resource, amount) + 1
+    end.max
+  end
+
+  def potential(resource)
+    if resource != :ore
+      @blueprint.blueprint[resource].each do |resource, amount|
+        return 0 if potential(resource) < amount
+      end 
+    end
+
+    remaining_time = MINUTES - @sequence.length - time_to_first_bot(resource)
+    @resources[resource] + 
+      (@bots[resource] * (remaining_time)) + 
+      (0..[remaining_time,0].max).inject(:+)
   end
 end
 
 
-MINUTES = 24
 
-blueprints = File.readlines('day19_sample.txt').map {|l| Blueprint.from_line(l) }
+MINUTES = 32
+file = 'day19.txt'
 
-sum_quality_level = blueprints[1..1].map do |blueprint|
+puts "sloving #{file}, #{MINUTES} minutes"
+
+blueprints = File.readlines(file).map {|l| Blueprint.from_line(l) }
+
+bests = []
+sum_quality_level = blueprints[0..2].map do |blueprint|
   sequence = Sequence.new(blueprint, {ore: 1, clay: 0, obsidian: 0, geode: 0}, {ore: 0, clay: 0, obsidian: 0, geode: 0}, [])
   $best_sequence = sequence
   
   sequences_to_try = PriorityQueue.new
-  sequences_to_try.push(sequence, sequence.weight)
+  sequences_to_try.push(sequence, sequence.potential_geodes)
   
   i = 0
   until sequences_to_try.empty?
     sequence, _ = sequences_to_try.pop
+
+    next if sequence.length > MINUTES
+    next if $best_sequence && sequence.potential_geodes < $best_sequence.geodes
   
-    # mark it as possible if it's the right length
-    if sequence.length == MINUTES
-      if $best_sequence.nil? || sequence.geodes > $best_sequence.geodes
-        $best_sequence = sequence 
-      end
-      # next
-    end
+    $best_sequence = sequence if $best_sequence.nil? || sequence.geodes > $best_sequence.geodes
   
-    # add next sequences to the list
+    # add next sequences to the inspection list
     sequence.next_sequences.each do |next_sequence|
-      sequences_to_try.push(next_sequence, next_sequence.weight)
+      sequences_to_try.push(next_sequence, next_sequence.potential_geodes)
     end
 
-    puts "\n================= it: #{i} , best: #{$best_sequence.geodes}====================" 
-    puts "\texploring sequence: #{sequence}"
+    if i % 100_000 == 0
+      puts "================= #{blueprint.id}, it: #{i} , best: #{$best_sequence.geodes}, bests: #{bests}====================" 
+      puts "\texploring sequence: #{sequence}"
+    end
 
     i += 1
   end  
 
   puts "finished blueprint #{blueprint.id} in #{i} iterations, best: #{$best_sequence.geodes}"
+  bests << $best_sequence.geodes
   blueprint.id * $best_sequence.geodes
 end.sum
 
 puts "sum_quality_level: #{sum_quality_level}"
+puts "product of bests: #{bests.inject(:*)}"
