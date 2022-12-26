@@ -1,20 +1,10 @@
 require 'byebug'
 require 'set'
+require_relative '../../fwk'
 
 INDEX_TO_RESOURCE = {nil => nil, 0 => :ore, 1 => :clay, 2 => :obsidian, 3 => :geode}.freeze
 
 $best_sequence = nil
-
-def deep_dup(obj)
-  case obj
-  when Array
-    obj.map { |item| deep_dup(item) }
-  when Hash
-    obj.each_with_object({}) { |(key, value), copy| copy[key] = deep_dup(value) }
-  else
-    obj.dup
-  end
-end
 
 class Blueprint
   attr_reader :id, :blueprint
@@ -71,8 +61,8 @@ class Sequence
 
     # check if we have enough resources
     return false if @blueprint.blueprint[bot_to_build].any? { |resource, needed_amount| @resources[resource] < needed_amount }
-
-    !previous_choice_is_nil_but_we_had_enough_resources_to_build_the_bot(bot_to_build)
+    true
+    # !previous_choice_is_nil_but_we_had_enough_resources_to_build_the_bot(bot_to_build)
   end
 
   def previous_choice_is_nil_but_we_had_enough_resources_to_build_the_bot(bot_to_build)
@@ -150,6 +140,7 @@ class Sequence
   end
 end
 
+
 MINUTES = 24
 
 blueprints = File.readlines('day19_sample.txt').map {|l| Blueprint.from_line(l) }
@@ -157,12 +148,13 @@ blueprints = File.readlines('day19_sample.txt').map {|l| Blueprint.from_line(l) 
 sum_quality_level = blueprints[1..1].map do |blueprint|
   sequence = Sequence.new(blueprint, {ore: 1, clay: 0, obsidian: 0, geode: 0}, {ore: 0, clay: 0, obsidian: 0, geode: 0}, [])
   $best_sequence = sequence
-  sequence_to_try = SortedSet.new([sequence])
+  
+  sequences_to_try = PriorityQueue.new
+  sequences_to_try.push(sequence, sequence.weight)
   
   i = 0
-  while sequence_to_try.any?
-    sequence = sequence_to_try.first
-    sequence_to_try.delete(sequence)
+  until sequences_to_try.empty?
+    sequence, _ = sequences_to_try.pop
   
     # mark it as possible if it's the right length
     if sequence.length == MINUTES
@@ -173,13 +165,12 @@ sum_quality_level = blueprints[1..1].map do |blueprint|
     end
   
     # add next sequences to the list
-    next_sequences = sequence.next_sequences
-
-    sequence_to_try += next_sequences
+    sequence.next_sequences.each do |next_sequence|
+      sequences_to_try.push(next_sequence, next_sequence.weight)
+    end
 
     puts "\n================= it: #{i} , best: #{$best_sequence.geodes}====================" 
     puts "\texploring sequence: #{sequence}"
-    puts "\t\tnext sequences:\n\t\t\t#{next_sequences.map(&:to_s).join("\n\t\t\t")}"
 
     i += 1
   end  

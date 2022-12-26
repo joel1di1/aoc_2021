@@ -26,6 +26,10 @@ class Shape
     @@index_shape
   end
 
+  def self.index_shape=(index)
+    @@index_shape = index
+  end
+
   def self.reset!
     @@index_shape = 0
   end
@@ -74,12 +78,16 @@ end
 class Board
   WIDTH = 7
 
+  attr_reader :fast_forward
+
   def initialize
     @board = {}
     (0..WIDTH-1).each do |y|
       @board[[0,y]] = '-'
     end
     @current_shape = nil
+
+    @cache_to_keep = {}
   end
 
   def [](x,y)
@@ -131,29 +139,29 @@ class Board
     end
   end
 
-  def apply_gravity(clean:)
+  def apply_gravity(clean:, index_shape:)
     # check if we can move
     if @current_shape.next_positions(1, 0).all? {|x,y| self[x,y].nil?}
       @current_shape.push_down
     else
-      freeze!(clean:)
+      freeze!(clean:, index_shape:)
     end
   end
 
-  def freeze!(clean:)
+  def freeze!(clean:, index_shape:)
     @current_shape.positions.each do |x,y|
       @board[[x,y]] = '#'
     end
     @current_shape = nil
 
-    remove_unused_points! if clean
+    remove_unused_points!(index_shape:) if clean
   end
 
-  def remove_unused_points!
-    display if Shape.index_shape == 511
+  def remove_unused_points!(index_shape:)
+    # display if Shape.index_shape == 511
     points_to_keep = Set.new
 
-    debugger if Shape.index_shape == 511
+    # debugger if Shape.index_shape == 511
     # get the highest point on column WIDTH-1
     target_y = WIDTH-1
     target_x = @board.keys.select{|x, y| y == target_y}.map(&:first).min
@@ -168,38 +176,57 @@ class Board
     current_direction = 0
     
     loop do
-      if current_x == target_x && current_y == target_y
-        # debugger
-        break if @board[[target_x, target_y - 1]].nil?
-        break if points_to_keep.include?([target_x, target_y - 1])
-      end
+      # mark the point            
+      points_to_keep << [current_x, current_y]
+      
+      break if current_x == target_x && current_y == target_y && current_direction == 1
 
       # if block in front of us, move to it
-      moved = false
-      until moved
-        if @board[[current_x + MOVES[directions[current_direction]][:coords_front][0], current_y + MOVES[directions[current_direction]][:coords_front][1]]]
-          points_to_keep << [current_x, current_y]
-          current_x, current_y = [current_x, current_y].zip(MOVES[directions[current_direction]][:coords_front]).map(&:sum)
-          puts "move to #{current_x}, #{current_y}"
-          current_direction -= 1 # turn left
-          moved = true
-        else
-          puts 'turn right'
-          current_direction += 1 # turn right
-          current_direction = current_direction % directions.size
-        end
+      if @board[[current_x + MOVES[directions[current_direction]][:coords_front][0], current_y + MOVES[directions[current_direction]][:coords_front][1]]]
+        # move forward
+        current_x, current_y = [current_x, current_y].zip(MOVES[directions[current_direction]][:coords_front]).map(&:sum)
+        current_direction = (current_direction - 1) % directions.size # turn left
+      else
+        current_direction = (current_direction + 1) % directions.size # turn right
       end
-
-      if current_y == target_y && current_x == target_x && Shape.index_shape == 511
-        debugger 
-        puts 'coucou'
-      end
-      # debugger 
     end
 
-    debugger
-    puts "points to keep : #{points_to_keep.size}"
+    # puts "points to keep : #{points_to_keep.size}"
     @board = @board.select{|k,v| points_to_keep.include?(k)}
+
+    # display if Shape.index_shape == 123 or 88
+    display if Shape.index_shape == 123 || Shape.index_shape == 88
+
+    return if true || @fast_forward
+
+    # cache the result downed to 0
+    positions = @board.keys
+    min_x, max_x = positions.map(&:first).minmax
+    positions = positions.map{|x,y| [x-max_x, y]}
+
+    cache_key = "#{positions} - #{index_shape % Shape::ORDERED_SHAPES.size}"
+    if @cache_to_keep[cache_key]
+      cached = @cache_to_keep[cache_key]
+      puts "already in cache"
+      puts "index_shape : #{index_shape}, min_x : #{min_x}, max_x : #{max_x}"
+      puts "cached, index_shape : #{cached[0]}, min_x : #{cached[1][0]}, max_x : #{cached[1][1]}"
+
+
+      # fast forward until tun before 1_000_000_000_000
+      # debugger
+      @fast_forward = {
+        index_shape: index_shape,
+        min_x: min_x,
+        max_x: max_x,
+        cached_index_shape: cached[0],
+        cached_min_x: cached[1][0],
+        cached_max_x: cached[1][1],
+        index_shape_diff: index_shape - cached[0],
+        min_x_diff: min_x - cached[1][0],
+      }
+    else
+      @cache_to_keep[cache_key] = [index_shape, [min_x, max_x]]
+    end
   end
 
   def freezed?
@@ -213,41 +240,62 @@ def find_max_x(nb_shapes, clean: false)
   Shape.reset!
   board = Board.new
   turn = 0
+  fast_forward = nil
+  nb_skipped_cycles = 0
   loop do 
     if board.freezed?
       # check if max number of shapes
       break if Shape.index_shape >= nb_shapes
-      puts "================= new shape #{Shape.index_shape} ==============="
+      # puts "================= new shape #{Shape.index_shape} ==============="
       board.add_new_shape 
       # board.display
     end
   
     instruction = instructions[turn%instructions.size]
-    puts "\n================= turn #{turn+1} : #{instruction} ===============" if turn % 10_000 == 0
+    puts "\n================= turn #{turn+1} : #{instruction} ===============" if turn % 50 == 0
 
     board.apply_instruction(instruction)
-    board.display if Shape.index_shape == 511
+    # board.display if Shape.index_shape == 511
   
-    board.apply_gravity(clean:)
-    board.display if Shape.index_shape == 511
+    board.apply_gravity(clean:, index_shape: Shape.index_shape)
+    # board.display if Shape.index_shape == 511
+
+    if fast_forward.nil? && board.fast_forward 
+      fast_forward = board.fast_forward
+      # number of shapes to do before nb_shapes
+      nb_shapes_to_do = nb_shapes - Shape.index_shape
+
+      # set the index_shape to the fast forwarded one
+      Shape.index_shape = nb_shapes - (nb_shapes_to_do % fast_forward[:index_shape_diff])
+
+      # number of skipped cycles
+      nb_skipped_cycles = (nb_shapes - fast_forward[:index_shape]) / fast_forward[:index_shape_diff]
+
+      puts "fast forward from #{fast_forward[:index_shape]} to #{Shape.index_shape}, #{nb_skipped_cycles} cycles of #{fast_forward[:index_shape_diff]} shapes, #{fast_forward[:min_x_diff]} diff between min_x"
+    end
   
     turn += 1
   end
   
-  board.display
-  -board.top_x
+  # board.display
+
+  # cycles x diff between min_x and cached_min_x
+  skipped = fast_forward.nil? ? 0 : nb_skipped_cycles * fast_forward[:min_x_diff]
+
+  -(board.top_x + skipped)
 end
 
-puts "================= clean false ==============="
-part1= find_max_x(2022, clean: false)
+# puts "================= clean false ==============="
+# part1= find_max_x(2022, clean: false)
+# puts "part 1: #{part1} expected 3117"
+
 puts "================= clean true ==============="
-part1_clean= find_max_x(2022, clean: true)
-puts "part 1: #{part1} expected 3117"
+part1_clean= find_max_x(2023, clean: true)
 puts "part 1 cleaned : #{part1_clean} expected 3117"
 
-# puts "-- ERROR --" if part1 != 3117
+puts "-- ERROR --" if part1_clean != 3117
 
-# part2= find_max_x(1000000000000)
+# part2= find_max_x(1_000_000_000_000)
 # puts "part 2: #{part2}"
 
 
@@ -255,3 +303,18 @@ puts "part 1 cleaned : #{part1_clean} expected 3117"
 # ##
 # # 10091 instructions
 # # 
+
+
+# 1 => 0, -13
+# 2 => -2, -15
+# 3 => -4, -17
+# ...
+# 10 = > -12, -25
+
+# # 2 and 10 are the same
+# # between 2 an 10, it adds 8 shapes, it adds 10 to height
+# # to get the 30th shape, we need to add 2 more cycles, meaning 20 more shapes
+# # so we reach 26th shape
+# # then finish to add the last shapes
+
+# 26 => -32, -45
