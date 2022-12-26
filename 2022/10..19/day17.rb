@@ -139,25 +139,25 @@ class Board
     end
   end
 
-  def apply_gravity(clean:, index_shape:)
+  def apply_gravity(clean:)
     # check if we can move
     if @current_shape.next_positions(1, 0).all? {|x,y| self[x,y].nil?}
       @current_shape.push_down
     else
-      freeze!(clean:, index_shape:)
+      freeze!(clean:)
     end
   end
 
-  def freeze!(clean:, index_shape:)
+  def freeze!(clean:)
     @current_shape.positions.each do |x,y|
       @board[[x,y]] = '#'
     end
     @current_shape = nil
 
-    remove_unused_points!(index_shape:) if clean
+    remove_unused_points! if clean
   end
 
-  def remove_unused_points!(index_shape:)
+  def remove_unused_points!
     # display if Shape.index_shape == 511
     points_to_keep = Set.new
 
@@ -204,28 +204,28 @@ class Board
     min_x, max_x = positions.map(&:first).minmax
     positions = positions.map{|x,y| [x-max_x, y]}
 
-    cache_key = "#{positions} - #{index_shape % Shape::ORDERED_SHAPES.size}"
+    cache_key = "#{positions} - #{Shape.index_shape % Shape::ORDERED_SHAPES.size}"
     if @cache_to_keep[cache_key]
       cached = @cache_to_keep[cache_key]
       puts "already in cache"
-      puts "index_shape : #{index_shape}, min_x : #{min_x}, max_x : #{max_x}"
+      puts "index_shape : #{Shape.index_shape}, min_x : #{min_x}, max_x : #{max_x}"
       puts "cached, index_shape : #{cached[0]}, min_x : #{cached[1][0]}, max_x : #{cached[1][1]}"
 
 
       # fast forward until tun before 1_000_000_000_000
       # debugger
       @fast_forward = {
-        index_shape: index_shape,
+        index_shape: Shape.index_shape,
         min_x: min_x,
         max_x: max_x,
         cached_index_shape: cached[0],
         cached_min_x: cached[1][0],
         cached_max_x: cached[1][1],
-        index_shape_diff: index_shape - cached[0],
+        index_shape_diff: Shape.index_shape - cached[0],
         min_x_diff: min_x - cached[1][0],
       }
     else
-      @cache_to_keep[cache_key] = [index_shape, [min_x, max_x]]
+      @cache_to_keep[cache_key] = [Shape.index_shape, [min_x, max_x]]
     end
   end
 
@@ -257,10 +257,10 @@ def find_max_x(nb_shapes, clean: false)
     board.apply_instruction(instruction)
     # board.display if Shape.index_shape == 511
   
-    board.apply_gravity(clean:, index_shape: Shape.index_shape)
+    board.apply_gravity(clean:)
     # board.display if Shape.index_shape == 511
 
-    if fast_forward.nil? && board.fast_forward 
+    if false && fast_forward.nil? && board.fast_forward 
       fast_forward = board.fast_forward
       # number of shapes to do before nb_shapes
       nb_shapes_to_do = nb_shapes - Shape.index_shape
@@ -290,7 +290,7 @@ end
 # puts "part 1: #{part1} expected 3117"
 
 puts "================= clean true ==============="
-part1_clean= find_max_x(2023, clean: true)
+part1_clean= find_max_x(2022, clean: true)
 puts "part 1 cleaned : #{part1_clean} expected 3117"
 
 puts "-- ERROR --" if part1_clean != 3117
