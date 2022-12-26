@@ -13,6 +13,17 @@ def assert(actual, msg: nil)
   raise msg unless actual
 end
 
+def deep_dup(obj)
+  case obj
+  when Array
+    obj.map { |item| deep_dup(item) }
+  when Hash
+    obj.each_with_object({}) { |(key, value), copy| copy[key] = deep_dup(value) }
+  else
+    obj.dup
+  end
+end
+
 class Heap
   def initialize
     @heap = []
