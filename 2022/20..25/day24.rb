@@ -95,6 +95,11 @@ def solve_part1(file)
   start_node = [0, 1]
   target_node = [current_map.height-1, current_map.width-2]
 
+  depth, current_map = solve(current_map, start_node, target_node)
+  puts "Part 1 #{file}: #{depth}"
+end
+
+def solve(current_map, start_node, target_node)
   reachable_nodes = Set.new
   reachable_nodes << start_node
 
@@ -122,12 +127,35 @@ def solve_part1(file)
     reachable_nodes = new_reachable_nodes
   end
 
-  puts "Part 1 - #{file}: #{depth}"
+  [depth, current_map]
 end
 
+def solve_part2(file)
+  current_map = Map.from_file(file)
 
-solve_part1('day24_small.txt')
+  start_node = [0, 1]
+  target_node = [current_map.height-1, current_map.width-2]
+
+  depth = 0
+
+  # first trip
+  depth_tmp, current_map = solve(current_map, start_node, target_node)
+  depth += depth_tmp
+
+  # back trip
+  depth_tmp, current_map = solve(current_map, target_node, start_node)
+  depth += depth_tmp
+
+  # last trip
+  depth_tmp, current_map = solve(current_map, start_node, target_node)
+  depth += depth_tmp
+  
+
+  puts "Part 2 #{file}: #{depth}"
+end
+
 solve_part1('day24_sample.txt')
 solve_part1('day24.txt')
 
+solve_part2('day24_sample.txt')
 solve_part2('day24.txt')
