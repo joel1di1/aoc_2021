@@ -215,3 +215,7 @@ end.sum
 
 puts "sum_quality_level: #{sum_quality_level}"
 puts "product of bests: #{bests.inject(:*)}"
+
+# finished blueprint 1 in 31950233 iterations, best: 8
+# finished blueprint 2 in 5217005 iterations, best: 16
+# 3 > 27
