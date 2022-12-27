@@ -53,6 +53,10 @@ class Heap
     @heap.empty?
   end
 
+  def size
+    @heap.size
+  end
+
   private
 
   def bubble_up(index)
@@ -138,9 +142,33 @@ class HeapElement
   end
 end
 
+class PriorityQueue
+  def initialize
+    @min_heap = MinHeap.new
+  end
+
+  def push(element, priority)
+    @min_heap << HeapElement.new(element, priority)
+  end
+
+  def pop
+    element = @min_heap.pop
+    [element.value, element.priority]
+  end
+
+  def empty?
+    @min_heap.empty?
+  end
+
+  def size
+    @min_heap.size
+  end
+end
+
+
 # find the shortest path between two nodes in a graph
 # Nodes must respond to #neighbors and #cost(neighbor)
-def dijkstra(start_node, end_node)
+def dijkstra(start_node, end_node, debug_every: nil)
   # Create a set to store the nodes that have been visited
   visited = Set.new
 
