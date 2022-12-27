@@ -179,51 +179,34 @@ def dijkstra(start_node, end_node, debug_every: nil)
   # Add the start node to the priority queue with a distance of 0
   pq.push(start_node, 0)
 
+  iter = 0
+
   # While there are nodes in the priority queue
   while !pq.empty?
     # Get the node with the smallest distance from the priority queue
     current_node, distance = pq.pop
+    puts "iter: #{iter}, pq size: #{pq.size}, current node: #{current_node}, distance: #{distance}" if debug_every && iter % debug_every == 0
 
     # If the current node is the end node, return the distance
-    return distance if current_node == end_node
+    return distance if end_node == current_node
 
     # Mark the current node as visited
     visited.add(current_node)
 
     # For each neighbor of the current node
-    debugger if current_node.is_a?(String)
     current_node.neighbors.each do |neighbor|
       # If the neighbor has not been visited
       if !visited.include?(neighbor)
         # Calculate the distance to the neighbor as the distance to the current node plus the cost of the edge between the current node and the neighbor
-        neighbor_distance = distance + current_node.cost(neighbor)
+        neighbor_distance = distance + (current_node.respond_to?(:cost) ? current_node.cost(neighbor) : 1)
 
         # Add the neighbor to the priority queue with the calculated distance
-        debugger if neighbor.is_a?(String)
         pq.push(neighbor, neighbor_distance)
       end
     end
+    iter += 1
   end
 
   # If the end node was not reached, return nil
   nil
-end
-
-class PriorityQueue
-  def initialize
-    @min_heap = MinHeap.new
-  end
-
-  def push(element, priority)
-    @min_heap << HeapElement.new(element, priority)
-  end
-
-  def pop
-    element = @min_heap.pop
-    [element.value, element.priority]
-  end
-
-  def empty?
-    @min_heap.empty?
-  end
 end
