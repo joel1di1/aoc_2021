@@ -29,6 +29,10 @@ class Heap
     @heap = []
   end
 
+  def array
+    @heap
+  end
+
   def push(element)
     @heap << element
     bubble_up(@heap.length - 1)
@@ -162,6 +166,10 @@ class PriorityQueue
 
   def size
     @min_heap.size
+  end
+
+  def array
+    @min_heap.array
   end
 end
 
