@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'set'
-require 'byebug'
+# require 'byebug'
 require_relative '../../fwk'
 
 class Sequence
@@ -303,13 +303,22 @@ class Sequence
   end
 end
 
-def solve(file)
+def solve_part1(file)
   puts "\n-- solving part 1 for file #{file}"
+  solve(file, 'day23_files/day23_part1_target.txt')
+end
+
+def solve_part2(file)
+  puts "\n-- solving part 2 for file #{file}"
+  solve(file, 'day23_files/day23_part2_target.txt')
+end
+
+def solve(file, target_file)
   sequence = Sequence.parse(file)
   # sequence.display
 
   # create the target Sequence
-  target = Sequence.parse('day23_files/day23_part1_target.txt')
+  target = Sequence.parse(target_file)
   # target.display
 
   # make a bfs to find the shortest path
@@ -388,10 +397,10 @@ def tests
 
 
 
-  solve('day23_files/day23_0.txt')
+  solve_part1('day23_files/day23_0.txt')
   # sequence = Sequence.parse('day23_files/day23_1.txt')
   # sequence.nexts_for([1, 4], {:type=>"B", :moved=>false}).each { |next_sequence| next_sequence.display }
-  solve('day23_files/day23_1.txt')
+  solve_part1('day23_files/day23_1.txt')
   puts 'Tests OK'
 end
 
@@ -400,4 +409,4 @@ end
 # best = solve('day23_sample.txt')
 # best.display_all_sequence
 # solve('day23_part1.txt')
-solve('day23_part2.txt')
+solve_part1('day23_part1.txt')
