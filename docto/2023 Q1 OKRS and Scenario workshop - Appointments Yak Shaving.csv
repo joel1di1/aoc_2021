@@ -1,0 +1,87 @@
+,,,,,,,,,,
+name,type,PG comment,product breakdown,analysis or comment if misssing,"move out from table
+0 -> no
+10 -> obvious we should",,Current column size,Resulting column size,expected gain on data size,expected gain on Index size
+,,,,Threadshold to compute gain:,8,,466.0037229,375.865204,19.34%,#ERROR!
+id,bigint,,,,0,,26916503816,26916503816,,
+patient_id,bigint,,,,0,,18575603864,18575603864,,
+start_date,timestamp without time zone,,,"strong debate around timezone support, recurring perf issue around ruby, json conversion, lot of specific cast in db to bypass conversion
+maybe storing start_date and start_time and timezone in separate column would have been better",0,,26916503816,26916503816,,
+end_date,timestamp without time zone,,,"- same comment as start_date
++ end_date should be in the same day
+
+maybe storing a duration instead of end_date would have been smarter ",0,,26916503816,26916503816,,
+created_at,timestamp without time zone,,,,0,,26916503816,26916503816,,
+updated_at,timestamp without time zone,,,,0,,26916503816,26916503816,,
+visit_motive_id,bigint,,,,0,,25643362192,25643362192,,
+status,character varying(255),,"source=patient status=temporary
+ONLINE BOOKING BY PATIENT / BOOK & EDIT APPOINTMENT
+soure=doctor
+APPOINTMENT BY HCP / MANAGE APPOINTMENT STATUS",,0,,27652193753,27652193753,,
+source,character varying(255),,,,0,,24863371624,24863371624,,
+deleted_at,timestamp without time zone,,APPOINTMENT BY HCP / MANAGE APPOINTMENT STATUS,,0,,12314144192,12314144192,,
+agenda_id,bigint,,CALENDAR / CREATE RESOURCE BY HCP,,0,,26916503816,26916503816,,
+import_identifier,character varying(255),,"MY DOCTOLIB / IMPORTS / PATIENTS AND APPOINTMENTS
+MY DOCTOLIB / EXTERNAL SYNCHRONISATION / EXTERNAL SYNC MESSAGES PROCESSES AND MONITORING",,0,,9549931789,9549931789,,
+lab_tech_agenda_id,bigint,,CALENDAR / CREATE RESOURCE BY HCP,,0,,93288464,93288464,,
+equipment_agenda_id,bigint,,CALENDAR / CREATE RESOURCE BY HCP,,0,,1606383344,1606383344,,
+master_step,boolean,,APPOINTMENT BY HCP / MULTIPLE APPOINTMENTS,,0,,3364562977,3364562977,,
+master_step_appointment_id,bigint,,APPOINTMENT BY HCP / MULTIPLE APPOINTMENTS,,0,,45598784,45598784,,
+appointment_set_id,bigint,Link toward the first appointment of the set the appointment belongs to,APPOINTMENT BY HCP / MULTIPLE APPOINTMENTS,,0,,939670072,939670072,,
+is_host_appointment,boolean,True if host appointment in case of a multiple practitioner appointment,APPOINTMENT BY HCP / MULTIPLE APPOINTMENTS,,0,,197599,197599,,
+host_appointment_id,bigint,"In the case of a multiple practitioner appointment, refers to the host appointment",APPOINTMENT BY HCP / MULTIPLE APPOINTMENTS,,0,,797808,797808,,
+read_only,boolean,,?,,0,,2491251099,2491251099,,
+new_patient,boolean,,,,0,,2461606485,2461606485,,
+insurance_sector,character varying,,,,0,,1833930223,1833930223,,
+patient_expected_at,timestamp without time zone,,NOTIFICATIONS TO PATIENTS,"the start_date seen from the patient point of view.
+Can be different from start_date if the patient has combined appointments (steps).
+We always needs to rely on patient_expected_at instead of start_date in notifications or patient apps",2,,26904788160,26904788160,,
+hospital_stay_type,character varying,,owned by HAPI but no clear feature in product beeakdown,only for a small set of appointments (hospital appointments only),2,,670093831,670093831,,
+custom_fields_values,hstore,,ONLINE BOOKING BY PATIENT / BOOK & EDIT APPOINTMENT,"used to stock HCP specific information during the booking
+",2,,25769721811,25769721811,,
+imported_at,timestamp without time zone,,MY DOCTOLIB / IMPORTS / PATIENTS AND APPOINTMENTS,,2,,2597611664,2597611664,,
+medical_record_id,bigint,,,,2,,326335648,326335648,,
+created_by,bigint,,,very few use cases,5,,19193565512,19193565512,,
+anonymized_at,timestamp without time zone,The date on which this appointment has been anonymized,DOCTOLIB TEAM / SECURITY / DATA RETENTION POLICY,deprecated ?,5,,1674660104,1674660104,,
+encounter_id,bigint,,,"low number of encounters, could be a reverse association",5,,10640840,10640840,,
+tanker_encrypted_notes,,features: EDIT APPOINTMENT,,,8,,36888817517,0,,
+referrer,character varying,,DOCTOLIB TEAM / BMS & EHR INTEGRATION / REFERRED APPT MESSAGE,name of the referrer in case there is no match in the db (otherwise referrer_id is filled),9,,117575890,0,,
+referrer_id,bigint,,DOCTOLIB TEAM / BMS & EHR INTEGRATION / REFERRED APPT MESSAGE,,9,,126686016,0,,
+referrer_message,text,,DOCTOLIB TEAM / BMS & EHR INTEGRATION / REFERRED APPT MESSAGE,"when booking for a patient, can be either a plain text or a linked document. -> could convet this message in a document.
+current security issue if not encrypted",10,,43899613,0,,
+arrived_at,timestamp without time zone,,CALENDAR / DISPLAY SETTINGS / LIST VIEW,"display in the calendar who's in the waiting room, pertinent if the HCP is working with a secretary who will fill the information",5,,5782869312,5782869312,,
+supported_at,timestamp without time zone,,CALENDAR / DISPLAY SETTINGS / LIST VIEW,"time of care
+only for handling patient flow at the office the day of the appointment",9,,1077831752,0,,
+departure_at,timestamp without time zone,,CALENDAR / DISPLAY SETTINGS / LIST VIEW,"time of care
+only for handling patient flow at the office the day of the appointment",9,,4790804760,0,,
+confirmed_at,timestamp without time zone,Date on which the appointment was confirmed,,,9,,18682245472,0,,
+payment_credit_card,numeric,,,all payment_* columns are for customers using this feature (I would say less than 4% usage),10,,72476042,0,,
+payment_cash,numeric,,,-,10,,10421960,0,,
+payment_check,numeric,,,-,10,,26531383,0,,
+payment_third_party_payer,numeric,,,-,10,,43195287,0,,
+payment_total,numeric,,,-,10,,137715923,0,,
+payment_missing,numeric,,,-,10,,3829553,0,,
+notes,text,,,"deprecated (should be removed, it has been replaced by tanker_encrypted_notes)",10,,24351754893,0,,
+handled_by_support,boolean,,,"deprecated, was use when support was able to create patient account on behalf of them. This is not possible anymore",10,,3364562977,0,,
+ref,character varying(255),,,"marketing. to know from where the booking happened. not sure it used in the product, probably could be a tracking event",10,,400169856,0,,
+deletion_source,character varying(255),,,for auditabilty only,10,,26755851729,0,,
+profile_id,bigint,,"ONLINE BOOKING BY PATIENT / BOOK & EDIT APPOINTMENT
+","To know from which profile (orga or hcp) the booking was taken
+to display the same infos in the patient app ",10,,10213357112,0,,
+delay,integer,,,store the delay when sending a notification to the patient to prevent sending again if HCP use it twice. probably displayed in the UI ?,10,,27741792,0,,
+iframe_domain,character varying,,ONLINE BOOKING BY PATIENT / BOOK & EDIT APPOINTMENT,stats for online booking,10,,543631708,0,,
+source_action,character varying,,ONLINE BOOKING BY PATIENT / BOOK & EDIT APPOINTMENT,stats for online booking,10,,10319735490,0,,
+seen_at,timestamp without time zone,,NOTIFICATIONS TO HCP / CALENDAR IN-APP NOTIFICATIONS / NEW ONLINE/ MOVED AND CANCELLED APPOINTMENT,"temporary information to know if the doctor has been notified by a popup in the product that there was this appointment. if set, the popup is not displayed. totally useless once start_date is in the past. useless for clients who deactivated the feature",10,,20360164360,0,,
+booking_token,character varying(255),,NOTIFICATIONS TO PATIENTS,used to display a short link for this appointment in the SMS. maybe deprecated by NTC,10,,16888912888,0,,
+asked_for_review_at,timestamp without time zone,,NOTIFICATIONS TO PATIENTS,use for having an idempotent job sending every day a email to patient for review. useless for clients who deactivated the feature (80%). useless if start_date is in the past,10,,1983821296,0,,
+confirmation_sent_at,timestamp without time zone,,NOTIFICATIONS TO PATIENTS,use for having an idempotent job sending a confirmation email of the booking to the patient,10,,12569846984,0,,
+notification_sent_at,timestamp without time zone,,NOTIFICATIONS TO PATIENTS,use for having an idempotent job sending a confirmation sms/push of the booking to the patient,10,,5597266864,0,,
+deletion_email_sent_at,timestamp without time zone,,NOTIFICATIONS TO PATIENTS,batch idempotent,10,,689349784,0,,
+move_email_sent_at,timestamp without time zone,,NOTIFICATIONS TO PATIENTS,batch idempotent,10,,570809496,0,,
+no_show_notification_sent_at,timestamp without time zone,,NOTIFICATIONS TO PATIENTS,batch idempotent,10,,36989520,0,,
+signature_token,character varying,Random token used to generate the appointment signature,NOTIFICATIONS TO PATIENTS,like booking_token but for email,10,,74251775265,0,,
+first_email_reminder_sent_at,timestamp without time zone,,NOTIFICATIONS TO PATIENTS,batch reminder to be idempotent,10,,3464241584,0,,
+second_email_reminder_sent_at,timestamp without time zone,,NOTIFICATIONS TO PATIENTS,batch reminder to be idempotent,10,,4736885816,0,,
+telehealth_notified_at,timestamp without time zone,,ONLINE BOOKING BY PATIENT / TCS ONLINE BOOKING,,10,,173755488,0,,
+max_billing_amount,integer,Maximum charged amount specified by doctor when booking,TCS EXECUTION / TCS PAYMENT,,10,,27453720,0,,
+telehealth_preferred_device,character varying,The device the patient said he would use for a doctor booking teleconsultation appointment,ONLINE BOOKING BY PATIENT / TCS ONLINE BOOKING,,10,,65922145,0,,

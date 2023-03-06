@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require 'set'
-# require 'byebug'
+require 'byebug'
 require_relative '../../fwk'
+
+class AmphipodCantMoveError < StandardError
+end
 
 class Sequence
   attr_reader :amphipod_positions, :cost, :target_per_type, :empty_spaces, :amphipod_positions_without_moved, :previous
@@ -84,6 +87,8 @@ class Sequence
       nexts += nexts_for(position, amphipod)
     end
     nexts
+  rescue AmphipodCantMoveError
+    []
   end
 
   def already_in_final_position?(amphipod, position)
@@ -151,7 +156,14 @@ class Sequence
 
     # move to empty space
     nexts << moves_to_empty_space(amphipod, position)
-    nexts.flatten.compact
+    nexts = nexts.flatten.compact
+
+    # raise error if amphipod can't move and is not in final position
+    if nexts.empty? && !already_in_final_position?(amphipod, position)
+      raise AmphipodCantMoveError.new("amphipod can't move") 
+    end
+
+    nexts
   end
 
   def first_empty_target_space(type)
@@ -409,4 +421,7 @@ end
 # best = solve('day23_sample.txt')
 # best.display_all_sequence
 # solve('day23_part1.txt')
+
 solve_part1('day23_part1.txt')
+
+# solve_part2('day23_part2.txt')
