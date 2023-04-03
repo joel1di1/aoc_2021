@@ -14,7 +14,7 @@ def init_stacks(stacklines)
       stacks[stack_index] << char_at_index unless char_at_index.nil? || char_at_index.strip == ''
     end
   end
-  stacks
+  stacks.map(&:reverse)
 end
 
 # First, let's read the input from day5.txt file
@@ -24,6 +24,7 @@ move_lines = lines.select { |line| line.start_with?('move') }
 
 # Let's initialize the stacks array
 stacks = init_stacks(stacklines)
+stacks.each { |stack| stack ||= [] }
 
 # Let's parse the moves and apply them to the stacks array
 moves = move_lines.map do |move|
