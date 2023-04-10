@@ -17,5 +17,3 @@ max_calories = elf_calories.max
 max_calories_elf = elf_calories.index(max_calories) + 1
 
 puts "Elf #{max_calories_elf} is carrying the most Calories: #{max_calories}"
-
-  
