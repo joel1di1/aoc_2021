@@ -1,64 +1,66 @@
-# frozen_string_literal: true
+require 'byebug'
+require 'set'
+require_relative '../../fwk'
 
-class AStar
-  def initialize(start, goal)
-    @start = start
-    @goal = goal
-  end
+lines = File.readlines(File.join(__dir__, 'day1.txt'))
 
-  def find_path
-    open_set = [@start]
-    came_from = {}
-    g_score = Hash.new(Float::INFINITY)
-    g_score[@start] = 0
-    f_score = Hash.new(Float::INFINITY)
-    f_score[@start] = heuristic_cost_estimate(@start)
+REPLACES = [
+  ['one', '1'],
+  ['two', '2'],
+  ['three', '3'],
+  ['four', '4'],
+  ['five', '5'],
+  ['six', '6'],
+  ['seven', '7'],
+  ['eight', '8'],
+  ['nine', '9']
+].freeze
 
-    until open_set.empty?
-      current = open_set.min_by { |node| f_score[node] }
-      return reconstruct_path(came_from, current) if current == @goal
 
-      open_set.delete(current)
-
-      neighbors(current).each do |neighbor|
-        tentative_g_score = g_score[current] + distance_between(current, neighbor)
-
-        next unless tentative_g_score < g_score[neighbor]
-
-        came_from[neighbor] = current
-        g_score[neighbor] = tentative_g_score
-        f_score[neighbor] = g_score[neighbor] + heuristic_cost_estimate(neighbor)
-
-        open_set << neighbor unless open_set.include?(neighbor)
-      end
-    end
-  end
-
-  private
-
-  def heuristic_cost_estimate(node)
-    # TODO: Implement your own heuristic function here
-    # This function should estimate the cost from the given node to the goal
-    # It should return a numeric value
-  end
-
-  def distance_between(node1, node2)
-    # TODO: Implement your own distance function here
-    # This function should calculate the distance between the given nodes
-    # It should return a numeric value
-  end
-
-  def neighbors(node)
-    # TODO: Implement your own function to get the neighbors of the given node
-    # This function should return an array of neighboring nodes
-  end
-
-  def reconstruct_path(came_from, current)
-    path = [current]
-    while came_from.key?(current)
-      current = came_from[current]
-      path.unshift(current)
-    end
-    path
-  end
+def is_digit?(c)
+  code = c.ord
+  # 48 is ASCII code of 0
+  # 57 is ASCII code of 9
+  code >= 48 && code <= 57
 end
+
+def replace_numbers_fwd(str)
+  return str if str.empty?
+
+  REPLACES.each do |replace_pair|
+    return replace_numbers_fwd(replace_pair[1] + str.sub(replace_pair[0], '')) if str.start_with?(replace_pair[0])
+  end
+
+  str[0] + replace_numbers_fwd(str[1..])
+end
+
+def replace_numbers_bkd(str)
+  return str if str.empty?
+
+  REPLACES.each do |replace_pair|
+    return replace_numbers_bkd(str[..-replace_pair[0].size-1]) + replace_pair[1] if str.end_with?(replace_pair[0])
+  end
+
+  replace_numbers_bkd(str[..-2]) + str[-1]
+end
+
+
+numbers = lines.map do |line|
+  first_digit = line.chars.find { |c| is_digit?(c) }
+  last_digit = line.chars.reverse.find { |c| is_digit?(c) }
+
+  "#{first_digit}#{last_digit}".to_i
+end
+
+puts "part1: #{numbers.sum}"
+
+numbers = lines.map do |line|
+  first_digit = replace_numbers_fwd(line).chars.find { |c| is_digit?(c) }
+  last_digit = replace_numbers_bkd(line).chars.reverse.find { |c| is_digit?(c) }
+
+  puts "Line: #{line}#{first_digit}#{last_digit}\n\n"
+
+  "#{first_digit}#{last_digit}".to_i
+end
+
+puts "part2: #{numbers.sum}"
