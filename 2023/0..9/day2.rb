@@ -35,3 +35,17 @@ sum = games.map.with_index do |sets, index|
 end.sum
 
 puts "part1: #{sum}"
+
+powers = games.map do |sets|
+  minimums = { 'red' => 0, 'green' => 0, 'blue' => 0 }
+
+  sets.each do |set|
+    set.each do |color, num|
+      minimums[color] = num if num > minimums[color]
+    end
+  end
+
+  minimums.values.inject(:*)
+end
+
+puts "part2: #{powers.sum}"
