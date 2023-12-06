@@ -243,7 +243,7 @@ def cut(range, cut_range)
   right = ([range.min, cut_range.max + 1].max..range.max)
 
   cut_ranges = [left, center, right].reject(&:empty?)
-  puts "\tcutting #{range.inspect} with #{cut_range.inspect} \t=> #{cut_ranges.inspect}"
+  # puts "\tcutting #{range.inspect} with #{cut_range.inspect} \t=> #{cut_ranges.inspect}"
 
   cut_ranges
 end
@@ -252,7 +252,7 @@ end
 def transform_ranges(ranges, transformations)
   ranges = ranges.dup
 
-  puts "transform_ranges(#{ranges.inspect})"
+  # puts "transform_ranges(#{ranges.inspect})"
   cut_ranges = []
   transformations.each do |src_range, dest_range, translation|
     ranges = ranges.map do |range|
@@ -260,7 +260,7 @@ def transform_ranges(ranges, transformations)
     end.flatten
   end
 
-  puts "   cut ranges: #{ranges.inspect}"
+  # puts "   cut ranges: #{ranges.inspect}"
 
   translated_ranges = ranges.map do |range|
     transf = transformations.find do |src_range, dest_range, translation|
@@ -268,15 +268,15 @@ def transform_ranges(ranges, transformations)
     end
     if transf
       new_range = (range.min + transf[2])..(range.max + transf[2])
-      puts "\tapply #{transf[2]} (#{transf[0]}) to #{range.inspect} => #{new_range.inspect}"
+      # puts "\tapply #{transf[2]} (#{transf[0]}) to #{range.inspect} => #{new_range.inspect}"
       new_range
     else
-      puts "\tno transformation for #{range.inspect}"
+      # puts "\tno transformation for #{range.inspect}"
       range
     end
   end
 
-  puts "\ttranslated_ranges : #{translated_ranges.inspect}"
+  # puts "\ttranslated_ranges : #{translated_ranges.inspect}"
 
   translated_ranges
 end
