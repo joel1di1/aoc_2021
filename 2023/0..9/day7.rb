@@ -27,12 +27,6 @@ class Hand
     @ranks << 0 if @ranks.empty?
 
     @ranks[0] += jokers
-
-    puts "#{@cards} #{@bid} #{@values} #{@ranks}"
-  end
-
-  def to_s
-    "#{@cards} #{@bid}"
   end
 
   def <=>(other)
@@ -42,18 +36,6 @@ class Hand
 
     @values <=> other.values
   end
-
-  def ==(other)
-    (self <=> other) == 0
-  end
-
-  def >(other)
-    (self <=> other) > 0
-  end
-
-  def <(other)
-    (self <=> other) < 0
-  end
 end
 
 hands = lines.map do |line|
@@ -61,12 +43,7 @@ hands = lines.map do |line|
   Hand.new(left, right.to_i)
 end
 
-assert(Hand.new('34567', 2) > Hand.new('23456', 2))
-assert(Hand.new('34567', 2) > Hand.new('23456', 2))
-
 hands.sort!
-
-puts hands
 
 total_win = hands.map.with_index do |hand, index|
   hand.bid * (index + 1)
