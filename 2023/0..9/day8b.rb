@@ -11,7 +11,9 @@ class Map
   end
 
   def steps
-    starting_nodes.map { |node| node.steps(@directions) }.reduce { |lcm, count| lcm.lcm(count) }
+    l_steps = starting_nodes.map { |node| node.steps(@directions) }
+    puts "steps: #{l_steps}"
+    l_steps.reduce { |lcm, count| lcm.lcm(count) }
   end
 end
 
