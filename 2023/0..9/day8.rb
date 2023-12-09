@@ -116,4 +116,8 @@ until ghosts.all?(&:looped?)
   end
 end
 
+ghosts.each do |ghost|
+  puts "#{ghost.name} loop size: #{ghost.loop_size}, shift_for_loop: #{ghost.shift_for_loop}"
+end
+
 puts ghosts.map(&:loop_size).reduce(1, :lcm)
