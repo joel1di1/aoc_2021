@@ -19,7 +19,7 @@ lines = File.readlines(File.join(__dir__, 'day1.txt'))
 sum = lines.map do |line|
   chars = line.chars
   digits = []
-  chars.each_with_index do |c, i|
+  chars.each_with_index do |c, _i|
     digits << c if Integer(c, exception: false)
   end
 
@@ -38,11 +38,8 @@ sum = lines.map do |line|
     end
 
     DIGITS_STR.each_with_index do |str, index|
-      if line[i..].start_with?(str)
-        digits << (index + 1).to_s
-      end
+      digits << (index + 1).to_s if line[i..].start_with?(str)
     end
-
   end
 
   (digits.first + digits.last).to_i

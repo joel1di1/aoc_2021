@@ -18,9 +18,11 @@ class Hand
 
     jokers = @cards.chars.count('J')
 
-    @values = cards.chars.map { | card | HEAD_VALUES[card] || card.to_i }
+    @values = cards.chars.map { |card| HEAD_VALUES[card] || card.to_i }
 
-    value_ranks = @values.inject(Hash.new(0)) { |total, e| total[e] += 1 ; total }
+    value_ranks = @values.each_with_object(Hash.new(0)) do |e, total| 
+      total[e] += 1
+    end
     value_ranks[0] = nil
     @ranks = value_ranks.values.compact.sort.reverse
 

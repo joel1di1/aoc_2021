@@ -4,7 +4,7 @@ require 'byebug'
 require 'set'
 require_relative '../../fwk'
 
-input = File.readlines('day19.txt');
+input = File.readlines('day19.txt')
 
 replacements = []
 original_molecule = nil
@@ -13,7 +13,7 @@ input.each do |line|
   next if line.empty?
 
   case line
-  when /(.*)\=>(.*)/
+  when /(.*)=>(.*)/
     key = Regexp.last_match(1).strip
     replacement = Regexp.last_match(2).strip
     replacements << [key, replacement]
@@ -29,9 +29,7 @@ def generate_molecules_with_one_replacement(original_molecule, replacement)
   value = replacement[1]
   new_molecules = []
   (0..original_molecule.length-1).each do |i|
-    if original_molecule[i..].start_with?(key)
-      new_molecules << original_molecule[0, i] + value + original_molecule[i+key.length..]
-    end
+    new_molecules << original_molecule[0, i] + value + original_molecule[i+key.length..] if original_molecule[i..].start_with?(key)
   end
 
   new_molecules

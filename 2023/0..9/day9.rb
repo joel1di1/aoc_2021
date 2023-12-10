@@ -28,15 +28,19 @@ def extrapolate(history)
   level -= 1
 
   until level < 0
-    sequences[level] << sequences[level][-1] + sequences[level+1][-1]
+    puts "level: #{level}"
+    puts "sequences[level]: #{sequences[level]}"
+    puts "sequences[level + 1]: #{sequences[level + 1]}"
+    sequences[level].insert(0, sequences[level][0] - sequences[level+1][0])
 
     level -= 1
   end
 
-  # puts sequences.map { |s| s.join(' ') }.join("\n")
+  puts sequences.map { |s| s.join(' ') }.join("\n")
 
-  sequences[0][-1]
+  sequences[0][0]
 end
 
-puts histories.map { |h| extrapolate(h)  }.sum
+
+puts histories.map { |h| extrapolate(h) }.sum
 

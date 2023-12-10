@@ -57,4 +57,4 @@ while i < card_wins.size
   i+=1
 end
 
-puts "part2: #{card_wins.values.map{|c| c[1]}.sum }}"
+puts "part2: #{card_wins.values.map { |c| c[1] }.sum}}"

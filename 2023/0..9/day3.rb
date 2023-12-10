@@ -99,7 +99,7 @@ part_of_stars = {}
   end
 end
 
-part_of_stars.map do |star, parts|
+part_of_stars.map do |_star, parts|
   sum_gear_ratio += parts.reduce(:*) if parts.size == 2
 end
 

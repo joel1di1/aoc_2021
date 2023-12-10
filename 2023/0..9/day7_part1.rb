@@ -14,10 +14,12 @@ class Hand
 
   def initialize(cards, bid)
     @cards = cards
-    @values = cards.chars.map { | card | HEAD_VALUES[card] || card.to_i }
+    @values = cards.chars.map { |card| HEAD_VALUES[card] || card.to_i }
 
     @bid = bid
-    @ranks = values.inject(Hash.new(0)) { |total, e| total[e] += 1 ; total }.values.sort.reverse
+    @ranks = values.each_with_object(Hash.new(0)) do |e, total| 
+      total[e] += 1
+    end.values.sort.reverse
   end
 
   def <=>(other)
