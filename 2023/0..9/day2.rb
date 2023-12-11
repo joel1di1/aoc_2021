@@ -11,7 +11,7 @@ def read_input(filename)
     _, right = line.split(':').map(&:strip)
 
     right.split(';').map(&:strip).map do |sets|
-      sets.split(',').map(&:strip).to_h do |set|
+      sets.split(',').map(&:strip).to_h do |set| # rubocop:disable Style/MapToHash
         num, color = set.split
         [color, num.to_i]
       end

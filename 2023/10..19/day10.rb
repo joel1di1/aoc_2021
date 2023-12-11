@@ -21,11 +21,7 @@ class Tile
     @next = nil
     @out_direction =
       case char
-      when '|'
-        in_direction
-      when '-'
-        in_direction
-      when 'S'
+      when '|', '-', 'S'
         in_direction
       when '7'
         in_direction == :up ? :left : :down
