@@ -17,26 +17,15 @@ end
 # print the grid
 grid.each { |row| puts row.join }
 
-row_index = 0
-until row_index == grid.size
-  row = grid[row_index]
-  if row.all? { |c| c == '.' }
-    grid.insert(row_index, row.dup)
-    row_index += 1
-  end
-  row_index += 1
+expand_row_index = []
+expand_col_index = []
+
+(0...grid.size).each do |row_index|
+  expand_row_index << row_index if grid[row_index].all? { |c| c == '.' }
 end
 
-col_index = 0
-until col_index == grid[0].size
-  col = grid.map { |row| row[col_index] }
-  if col.all? { |c| c == '.' }
-    grid.each do |row|
-      row.insert(col_index, '.')
-    end
-    col_index += 1
-  end
-  col_index += 1
+(0...grid[0].size).each do |col_index|
+  expand_col_index << col_index if grid.all? { |row| row[col_index] == '.' }
 end
 
 puts 'after inserting rows'
@@ -60,7 +49,14 @@ lengh_sum = stars[..-2].map.with_index do |star, index|
     vector = [other_star[0] - star[0], other_star[1] - star[1]]
     # find the distance between the two stars
     distance = vector[0].abs + vector[1].abs
-    distance
+
+    # count how many time we cross a expanded row or column
+    expand_rows = expand_row_index.select { |row_index| row_index.between?(star[0], other_star[0]) }.count
+    expand_cols = expand_col_index.select { |col_index| col_index.between?(star[1], other_star[1]) }.count
+
+    total = distance + expand_rows + expand_cols
+    puts "star: #{stars.index(star)}, other_star: #{stars.index(other_star)}, distance: #{distance}, expand_rows: #{expand_rows}, expand_cols: #{expand_cols}, total: #{total}"
+    total
   end
 end.flatten.sum
 
