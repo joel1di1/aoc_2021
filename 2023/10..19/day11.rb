@@ -28,7 +28,7 @@ def total_distance(stars, expand_row_index, expand_col_index, expansion)
       expand_rows = expand_row_index.select { |row_index| row_index.between?([star[0], other_star[0]].min, [star[0], other_star[0]].max) }.count
       expand_cols = expand_col_index.select { |col_index| col_index.between?([star[1], other_star[1]].min, [star[1], other_star[1]].max) }.count
 
-      total = distance + (expand_rows + expand_cols) * (expansion - 1)
+      total = distance + ((expand_rows + expand_cols) * (expansion - 1))
       # puts "star: #{stars.index(star)}, other_star: #{stars.index(other_star)}, distance: #{distance}, expand_rows: #{expand_rows}, expand_cols: #{expand_cols}, total: #{total}"
       total
     end

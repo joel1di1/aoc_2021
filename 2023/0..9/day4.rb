@@ -11,9 +11,9 @@ worths = lines.map do |line|
   _left, right = line.split(':')
   wining_numbers, my_numbers = right.split('|').map(&:strip)
 
-  wining_numbers = wining_numbers.split(' ').map(&:to_i)
+  wining_numbers = wining_numbers.split.map(&:to_i)
   wining_numbers_set = Set.new(wining_numbers)
-  my_numbers = my_numbers.split(' ').map(&:to_i)
+  my_numbers = my_numbers.split.map(&:to_i)
 
   points = 0
   my_numbers.each do |my_number|
@@ -36,9 +36,9 @@ lines.map.with_index do |line, i|
   _left, right = line.split(':')
   wining_numbers, my_numbers = right.split('|').map(&:strip)
 
-  wining_numbers = wining_numbers.split(' ').map(&:to_i)
+  wining_numbers = wining_numbers.split.map(&:to_i)
   wining_numbers_set = Set.new(wining_numbers)
-  my_numbers = my_numbers.split(' ').map(&:to_i)
+  my_numbers = my_numbers.split.map(&:to_i)
 
   # numbers of my numbers that are winning numbers
   my_winning_numbers = my_numbers.select { |my_number| wining_numbers_set.include?(my_number) }

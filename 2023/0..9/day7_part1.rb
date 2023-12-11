@@ -32,7 +32,7 @@ class Hand
 end
 
 hands = lines.map do |line|
-  left, right = line.split(' ')
+  left, right = line.split
   Hand.new(left, right.to_i)
 end
 

@@ -12,14 +12,14 @@ SEQUENCE = lines.first
 lines.shift
 lines.shift
 
-NODES = lines.map do |line|
+NODES = lines.to_h do |line|
   match = /(\w{3}) = \((\w{3}), (\w{3})\)/.match(line)
   name = match[1]
   left = match[2]
   right = match[3]
 
   [name, [left, right]]
-end.to_h.freeze
+end.freeze
 
 class Ghost
   attr_reader :name, :path, :visited, :loop, :finishing_nodes, :first_finishing_index, :loop_size, :shift_for_loop
@@ -94,7 +94,7 @@ class Ghost
 
   def winning?(steps)
     # puts "\t #{name} steps - @shift_for_loop: #{@shift_for_loop}, loop_size: #{@loop_size}, mod: #{(steps) % @loop_size}"
-    steps - 1 % @loop_size == 0
+    steps - (1 % @loop_size) == 0
   end
 end
 

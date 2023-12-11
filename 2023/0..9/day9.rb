@@ -7,7 +7,7 @@ require_relative '../../fwk'
 
 lines = File.readlines("#{__dir__}/input9.txt", chomp: true)
 
-histories = lines.map { |l| l.split(' ').map(&:to_i) }
+histories = lines.map { |l| l.split.map(&:to_i) }
 
 def extrapolate(history)
   sequences = [history]
