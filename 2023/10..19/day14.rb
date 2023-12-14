@@ -6,173 +6,154 @@ require 'byebug'
 require 'set'
 require_relative '../../fwk'
 
-grid = File.readlines("#{__dir__}/input14.txt", chomp: true).map(&:chars)
+class Bag
+  attr_accessor :target_coords, :coords, :next_bags, :count
 
-def display_grid(grid)
-  grid.each do |row|
-    puts row.join
+  def initialize
+    @count = 0
+    @next_bags = []
+    @target_coords = []
   end
+
+  def inc
+    @count += 1
+  end
+
+  def pass!
+    @next_bags[0...@count].each(&:inc)
+    @count = 0
+  end
+
+  def to_s
+    "#{@target_coords} #{@count}"
+  end
+
+  def inspect
+    to_s
+  end
+end
+
+def print_grid(grid, grid_of_bags)
+  puts ((0...grid.size).map do |i|
+    (0...grid[i].size).map do |j|
+      bag = grid_of_bags[[i, j]]
+      if bag.nil?
+        '#'
+      elsif bag.target_coords.index([i, j]) < bag.count
+        'O'
+      else
+        '.'
+      end
+    end.join
+  end.join("\n"))
+
   puts
 end
 
-def tilt_north(grid)
-  # iterate on columns
-  (0...grid[0].size).each do |col_index|
-    # start from the bottom
-    row_index = grid[0].size - 1
-    rocks = 0
-
-    until row_index < 0
-      current = grid[row_index][col_index]
-      case current
-      when 'O'
-        grid[row_index][col_index] = '.'
-        rocks += 1
-      when '.'
-      when '#'
-        (0...rocks).each do |i|
-          grid[row_index + 1 + i][col_index] = 'O'
-        end
-        rocks = 0
+def load(grid, grid_of_bags)
+  (0...grid.size).map do |i|
+    (0...grid[i].size).map do |j|
+      bag = grid_of_bags[[i, j]]
+      if bag.nil?
+        0
+      elsif bag.target_coords.index([i, j]) < bag.count
+        grid.size - i
       else
-        raise "Unexpected #{current}"
+        0
       end
-      row_index -= 1
-    end
-
-    (0...rocks).each do |i|
-      grid[row_index + 1 + i][col_index] = 'O'
-    end
-  end
-end
-
-def tilt_south(grid)
-  # iterate on columns
-  (0...grid[0].size).each do |col_index|
-    # start from the top
-    row_index = 0
-    rocks = 0
-
-    until row_index >= grid[0].size
-      current = grid[row_index][col_index]
-      case current
-      when 'O'
-        grid[row_index][col_index] = '.'
-        rocks += 1
-      when '.'
-      when '#'
-        (0...rocks).each do |i|
-          grid[row_index - 1 - i][col_index] = 'O'
-        end
-        rocks = 0
-      else
-        raise "Unexpected #{current}"
-      end
-      row_index += 1
-    end
-
-    (0...rocks).each do |i|
-      grid[row_index - 1 - i][col_index] = 'O'
-    end
-  end
-end
-
-def tilt_west(grid)
-  # iterate on rows
-  (0...grid.size).each do |row_index|
-    # start from the right
-    col_index = grid.size - 1
-    rocks = 0
-
-    until col_index < 0
-      current = grid[row_index][col_index]
-      case current
-      when 'O'
-        grid[row_index][col_index] = '.'
-        rocks += 1
-      when '.'
-      when '#'
-        (0...rocks).each do |i|
-          grid[row_index][col_index + 1 + i] = 'O'
-        end
-        rocks = 0
-      else
-        raise "Unexpected #{current}"
-      end
-      col_index -= 1
-    end
-
-    (0...rocks).each do |i|
-      grid[row_index][col_index + 1 + i] = 'O'
-    end
-  end
-end
-
-def tilt_east(grid)
-  # iterate on rows
-  (0...grid.size).each do |row_index|
-    # start from the left
-    col_index = 0
-    rocks = 0
-
-    until col_index >= grid.size
-      current = grid[row_index][col_index]
-      case current
-      when 'O'
-        grid[row_index][col_index] = '.'
-        rocks += 1
-      when '.'
-      when '#'
-        (0...rocks).each do |i|
-          grid[row_index][col_index - 1 - i] = 'O'
-        end
-        rocks = 0
-      else
-        raise "Unexpected #{current}"
-      end
-      col_index += 1
-    end
-
-    (0...rocks).each do |i|
-      grid[row_index][col_index - 1 - i] = 'O'
-    end
-  end
-end
-
-def load(grid)
-  grid.map.with_index do |line, row_index|
-    line.map do |c|
-      c == 'O' ? grid.size - row_index : 0
     end.sum
   end.sum
 end
 
-def transpose(grid)
-  grid.transpose.map(&:reverse)
+grid = File.readlines("#{__dir__}/input14.txt", chomp: true).map(&:chars)
+
+grid_of_bags_north = {}
+grid_of_bags_south = {}
+grid_of_bags_east = {}
+grid_of_bags_west = {}
+
+(0...grid.size).each do |i|
+  north_bag = Bag.new
+  south_bag = Bag.new
+
+  (0...grid[i].size).each do |j|
+    char = grid[i][j]
+    case char
+    when '.', 'O'
+      grid_of_bags_north[[i, j]] = north_bag
+      grid_of_bags_south[[i, j]] = south_bag
+
+      north_bag.target_coords << [i, j]
+      south_bag.target_coords.insert(0, [i, j])
+    when '#'
+      north_bag = Bag.new
+      south_bag = Bag.new
+    else
+      raise "Unknown char #{char}"
+    end
+  end
 end
 
-# tilt_north(grid)
-# display_grid(grid)
+(0...grid[0].size).each do |j|
+  west_bag = Bag.new
+  east_bag = Bag.new
 
-# puts "part1: #{load(grid)}"
+  (0...grid.size).each do |i|
+    char = grid[i][j]
+    case char
+    when '.', 'O'
+      grid_of_bags_west[[i, j]] = west_bag
+      grid_of_bags_east[[i, j]] = east_bag
 
-visited = Set.new
-visited << grid.map(&:join).join
-
-def cycle(grid)
-  tilt_north(grid)
-  tilt_west(grid)
-  tilt_south(grid)
-  tilt_east(grid)
-  grid
+      west_bag.target_coords.insert(0, [i, j])
+      east_bag.target_coords << [i, j]
+    when '#'
+      west_bag = Bag.new
+      east_bag = Bag.new
+    else
+      raise "Unknown char #{char}"
+    end
+  end
 end
 
-cycles = 1_000_000_000
+(0...grid.size).each do |i|
+  (0...grid[i].size).each do |j|
+    char = grid[i][j]
+    next if char == '#'
 
-cycles.times do |i|
-  grid = cycle(grid)
+    north = grid_of_bags_north[[i, j]]
+    south = grid_of_bags_south[[i, j]]
+    west = grid_of_bags_west[[i, j]]
+    east = grid_of_bags_east[[i, j]]
 
-  puts "cycle #{i + 1}" if (i + 1) % 10000 == 0
+    north.next_bags << west
+    west.next_bags.insert(0, south)
+    south.next_bags.insert(0, east)
+    east.next_bags << north
+
+    next if char == '.'
+
+    east.inc
+  end
 end
 
-puts "part2: #{load(grid)}"
+
+# titl north
+norths = grid_of_bags_north.values
+wests = grid_of_bags_west.values
+souths = grid_of_bags_south.values
+easts = grid_of_bags_east.values
+
+print_grid(grid, grid_of_bags_east)
+puts "part 1: #{load(grid, grid_of_bags_east)}"
+
+3.times do
+  easts.each(&:pass!)
+  norths.each(&:pass!)
+  wests.each(&:pass!)
+  souths.each(&:pass!)
+
+  print_grid(grid, grid_of_bags_east)
+end
+
+puts "part 2: #{load(grid, grid_of_bags_east)}"

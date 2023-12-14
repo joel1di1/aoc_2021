@@ -98,23 +98,23 @@ part2 = patterns.map do |pattern|
   origin_horizontal_sym = find_horizontal_sym(pattern).first
   origin_vertical_sym = find_vertical_sym(pattern).first
 
-  pattern.map.with_index do |line, i|
+  pattern.map.with_index do |line, _i|
     # line is a string, switch the char at index i
     # if it was a # then it becomes a . and vice versa
     (0...line.size).map do |j|
       line[j] = line[j] == '#' ? '.' : '#'
 
       # find the horizontal sym
-        horizontal_syms = find_horizontal_sym(pattern)
-        # debugger if horizontal_syms.size > 1
-        horizontal_syms.delete(origin_horizontal_sym)
-        horizontal_sym = horizontal_syms.first
+      horizontal_syms = find_horizontal_sym(pattern)
+      # debugger if horizontal_syms.size > 1
+      horizontal_syms.delete(origin_horizontal_sym)
+      horizontal_sym = horizontal_syms.first
 
       # find the vertical sym
-        vertical_syms = find_vertical_sym(pattern)
-        vertical_syms.delete(origin_vertical_sym)
-        # debugger if vertical_syms.size > 0
-        vertical_sym = vertical_syms.first
+      vertical_syms = find_vertical_sym(pattern)
+      vertical_syms.delete(origin_vertical_sym)
+      # debugger if vertical_syms.size > 0
+      vertical_sym = vertical_syms.first
 
       line[j] = line[j] == '#' ? '.' : '#'
 

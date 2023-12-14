@@ -24,12 +24,10 @@ assert valid?(".#.", [1])
 assert valid?("..##..#..", [2, 1])
 assert !valid?("..##..##..", [2, 1])
 
-CACHE_POSSIBLE = {}
+CACHE_POSSIBLE = {}.freeze
 
 def possible?(record, conditions)
-  if CACHE_POSSIBLE[[record, conditions]]
-    return CACHE_POSSIBLE[[record, conditions]]
-  end
+  return CACHE_POSSIBLE[[record, conditions]] if CACHE_POSSIBLE[[record, conditions]]
 
   res = _possible?(record, conditions)
   CACHE_POSSIBLE[[record, conditions]] = res
@@ -46,7 +44,7 @@ def _possible?(record, conditions)
 
   if fixed_part.end_with?('#')
     fixed_conditions_to_test = fixed_conditions[...-1]
-    fixed_part_to_test, last_group =  /([\.#]*\.)?(#+$)/.match(fixed_part)[1..2]
+    fixed_part_to_test, last_group = /([\.#]*\.)?(#+$)/.match(fixed_part)[1..2]
     return false if fixed_part_to_test && !valid?(fixed_part_to_test, conditions[...fixed_conditions_to_test.size])
     return false if last_group.size > (conditions[fixed_conditions.size - 1] || 0)
   else
@@ -75,15 +73,15 @@ def count_possibilities(record, conditions)
       if valid?(current, conditions)
         valids += 1
         puts "\tvalid: #{current}" if DEBUG
-      else
-        puts "\tinvalid: #{current}" if DEBUG
+      elsif DEBUG
+        puts "\tinvalid: #{current}"
       end
       next
     end
 
     possible = possible?(current, conditions)
     puts "\tpossible: #{possible}" if DEBUG
-    next if !possible?(current, conditions)
+    next unless possible?(current, conditions)
 
     nel = current.sub('?', '.')
     heap << HeapElement.new(nel, nel.index('?') || nel.size)
@@ -94,7 +92,7 @@ def count_possibilities(record, conditions)
   valids
 end
 
-CACHE = {}
+CACHE = {}.freeze
 
 def count_possibilities_cached(record, conditions)
   # puts "ask cached: #{record}, conditions: #{conditions}" if DEBUG
@@ -119,9 +117,9 @@ def count_possibilities_rec(record, conditions)
 
   case record[0]
   when nil
-    return conditions.empty? ? 1 : 0
+    conditions.empty? ? 1 : 0
   when '.'
-    return count_possibilities_cached(record[1..], conditions)
+    count_possibilities_cached(record[1..], conditions)
   when '#'
     number_of_dash = conditions.first
     return 0 if number_of_dash.nil?
@@ -130,11 +128,10 @@ def count_possibilities_rec(record, conditions)
     return 0 if record[number_of_dash] == '#'
 
     next_record = record[number_of_dash+1..]
-    return count_possibilities_cached(next_record, conditions[1..])
+    count_possibilities_cached(next_record, conditions[1..])
   when '?'
-    return count_possibilities_cached(record.sub('?', '#'), conditions) + count_possibilities_cached(record.sub('?', '.'), conditions)
+    count_possibilities_cached(record.sub('?', '#'), conditions) + count_possibilities_cached(record.sub('?', '.'), conditions)
   end
-
 end
 
 assert_eq 1, count_possibilities_cached('?', [1])
@@ -161,8 +158,8 @@ end
 
 # # assert_eq 1, count_possibilities_cached('???.###', [1, 1, 3])
 assert_eq 16384, count_possibilities_unfolded('.??..??...?##.', [1, 1, 3])
-assert_eq 16, count_possibilities_unfolded('????.#...#...', [4,1,1])
-assert_eq 2500, count_possibilities_unfolded('????.######..#####.', [1,6,5])
+assert_eq 16, count_possibilities_unfolded('????.#...#...', [4, 1, 1])
+assert_eq 2500, count_possibilities_unfolded('????.######..#####.', [1, 6, 5])
 
 # assert_eq 1, count_possibilities_cached('#??.###', [1,1,3])
 
