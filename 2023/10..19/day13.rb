@@ -40,16 +40,6 @@ assert_eq 3, summarize('.##')
 assert_eq 4, summarize('#..')
 assert_eq 8, summarize('#...')
 
-def find_horizontal_sym(pattern)
-  puts "\nfind_horizontal_sym"
-  display_pattern(pattern)
-
-  summaries = pattern.map { |line| summarize(line) }
-
-  # find the sym
-  find_sym(summaries)
-end
-
 def find_sym(summaries)
   sym_index = []
   (1...summaries.size).each do |i|
@@ -60,10 +50,7 @@ def find_sym(summaries)
       summaries[i - j - 1] == summaries[i + j]
     end
   end
-  # puts "sym_index: #{sym_index}"
-  raise 'too many syms' if sym_index.size > 1
-
-  sym_index.first
+  sym_index
 end
 
 def display_pattern(pattern)
@@ -72,9 +59,19 @@ def display_pattern(pattern)
   end
 end
 
+def find_horizontal_sym(pattern)
+  # puts "\nfind_horizontal_sym"
+  # display_pattern(pattern)
+
+  summaries = pattern.map { |line| summarize(line) }
+
+  # find the sym
+  find_sym(summaries)
+end
+
 def find_vertical_sym(pattern)
-  puts "\nfind_vertical_sym"
-  display_pattern(pattern)
+  # puts "\nfind_vertical_sym"
+  # display_pattern(pattern)
   cols = (0...pattern[0].size).map do |col|
     pattern.map { |line| line[col] }.join
   end
@@ -84,20 +81,49 @@ def find_vertical_sym(pattern)
   find_sym(summaries)
 end
 
-
-sums = patterns.map do |pattern|
-  puts "check pattern:"
-  pattern.each do |line|
-    puts line
-  end
-  puts
-
-  horizontal_sym = find_horizontal_sym(pattern) || 0
-  vertical_sym = find_vertical_sym(pattern) || 0
-
-  puts "horizontal_sym: #{horizontal_sym}, vertical_sym: #{vertical_sym}"
+def sum_pattern(pattern)
+  horizontal_sym = find_horizontal_sym(pattern).first || 0
+  vertical_sym = find_vertical_sym(pattern).first || 0
 
   (horizontal_sym * 100) + vertical_sym
-end.sum
+end
 
-puts "sums: #{sums}"
+part1 = patterns.map { |pattern| sum_pattern(pattern) }.sum
+
+puts "Part1: #{part1}"
+
+
+# Part 2
+part2 = patterns.map do |pattern|
+  origin_horizontal_sym = find_horizontal_sym(pattern).first
+  origin_vertical_sym = find_vertical_sym(pattern).first
+
+  pattern.map.with_index do |line, i|
+    # line is a string, switch the char at index i
+    # if it was a # then it becomes a . and vice versa
+    (0...line.size).map do |j|
+      line[j] = line[j] == '#' ? '.' : '#'
+
+      # find the horizontal sym
+        horizontal_syms = find_horizontal_sym(pattern)
+        # debugger if horizontal_syms.size > 1
+        horizontal_syms.delete(origin_horizontal_sym)
+        horizontal_sym = horizontal_syms.first
+
+      # find the vertical sym
+        vertical_syms = find_vertical_sym(pattern)
+        vertical_syms.delete(origin_vertical_sym)
+        # debugger if vertical_syms.size > 0
+        vertical_sym = vertical_syms.first
+
+      line[j] = line[j] == '#' ? '.' : '#'
+
+      res = ((horizontal_sym || 0) * 100) + (vertical_sym || 0)
+      # puts "i: #{i}, j: #{j}, res: #{res}"
+      res
+    end.uniq
+  end
+end.flatten.sum
+
+
+puts "Part2: #{part2/2}"
