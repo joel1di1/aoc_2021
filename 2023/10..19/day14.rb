@@ -20,7 +20,9 @@ class Bag
   end
 
   def pass!
-    @next_bags[0...@count].each(&:inc)
+    (0...@count).each do |i|
+      @next_bags[i].inc
+    end
     @count = 0
   end
 
@@ -34,20 +36,20 @@ class Bag
 end
 
 def print_grid(grid, grid_of_bags)
-  puts ((0...grid.size).map do |i|
-    (0...grid[i].size).map do |j|
-      bag = grid_of_bags[[i, j]]
-      if bag.nil?
-        '#'
-      elsif bag.target_coords.index([i, j]) < bag.count
-        'O'
-      else
-        '.'
-      end
-    end.join
-  end.join("\n"))
+  # puts ((0...grid.size).map do |i|
+  #   (0...grid[i].size).map do |j|
+  #     bag = grid_of_bags[[i, j]]
+  #     if bag.nil?
+  #       '#'
+  #     elsif bag.target_coords.index([i, j]) < bag.count
+  #       'O'
+  #     else
+  #       '.'
+  #     end
+  #   end.join
+  # end.join("\n"))
 
-  puts
+  # puts
 end
 
 def load(grid, grid_of_bags)
@@ -138,7 +140,6 @@ end
 end
 
 
-# titl north
 norths = grid_of_bags_north.values
 wests = grid_of_bags_west.values
 souths = grid_of_bags_south.values
@@ -147,15 +148,17 @@ easts = grid_of_bags_east.values
 print_grid(grid, grid_of_bags_east)
 puts "part 1: #{load(grid, grid_of_bags_east)}"
 
-3.times do
+1_000_000_000.times do |i|
+
+  puts i if i % 10000 == 0
+  souths.each(&:pass!)
+  # print_grid(grid, grid_of_bags_east)
   easts.each(&:pass!)
   # print_grid(grid, grid_of_bags_north)
   norths.each(&:pass!)
   # print_grid(grid, grid_of_bags_west)
   wests.each(&:pass!)
   # print_grid(grid, grid_of_bags_south)
-  souths.each(&:pass!)
-  print_grid(grid, grid_of_bags_east)
 end
 
-puts "part 2: #{load(grid, grid_of_bags_east)}"
+puts "part 2: #{load(grid, grid_of_bags_south)}"
