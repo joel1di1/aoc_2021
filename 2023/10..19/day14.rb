@@ -149,10 +149,12 @@ puts "part 1: #{load(grid, grid_of_bags_east)}"
 
 3.times do
   easts.each(&:pass!)
+  # print_grid(grid, grid_of_bags_north)
   norths.each(&:pass!)
+  # print_grid(grid, grid_of_bags_west)
   wests.each(&:pass!)
+  # print_grid(grid, grid_of_bags_south)
   souths.each(&:pass!)
-
   print_grid(grid, grid_of_bags_east)
 end
 
