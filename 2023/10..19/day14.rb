@@ -161,13 +161,20 @@ visited << grid.map(&:join).join
 
 def cycle(grid)
   tilt_north(grid)
+  display_grid(grid)
+
   tilt_west(grid)
+  display_grid(grid)
+
   tilt_south(grid)
+  display_grid(grid)
+
   tilt_east(grid)
+  display_grid(grid)
   grid
 end
 
-cycles = 1_000_000_000
+cycles = 3
 
 cycles.times do |i|
   grid = cycle(grid)
