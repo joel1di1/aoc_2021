@@ -161,25 +161,41 @@ visited << grid.map(&:join).join
 
 def cycle(grid)
   tilt_north(grid)
-  display_grid(grid)
-
   tilt_west(grid)
-  display_grid(grid)
-
   tilt_south(grid)
-  display_grid(grid)
-
   tilt_east(grid)
-  display_grid(grid)
   grid
 end
 
-cycles = 3
+cycles = 1_000_000_000
 
-cycles.times do |i|
+cache = {}
+found = false
+(1..cycles).each do |i|
+  cache_key = grid.map(&:join).join
+  cache_value = cache[cache_key]
+  if cache_value
+    puts "cycle #{i} is the same as #{cache_value}"
+
+    # we found a cycle, extrapole to 1_000_000_000
+    remaining = cycles - i
+    loop_size = i - cache_value
+
+    mod = remaining % loop_size
+    skipped = (remaining / loop_size) * loop_size
+
+    puts "remaining: #{remaining}, loop_size: #{loop_size}, mod: #{mod}"
+    puts "done: #{i - 1}, skipped: #{skipped}, to do: #{mod}"
+    puts "total: #{i - 1 + skipped + mod}"
+
+    ((remaining + 1) % loop_size).times do
+      grid = cycle(grid)
+    end
+    break
+  end
+
   grid = cycle(grid)
-
-  puts "cycle #{i + 1}" if (i + 1) % 10000 == 0
+  cache[cache_key] = i
 end
 
 puts "part2: #{load(grid)}"
