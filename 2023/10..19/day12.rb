@@ -6,172 +6,125 @@ require 'byebug'
 require 'set'
 require_relative '../../fwk'
 
-DEBUG = false
 records = File.readlines("#{__dir__}/input12.txt", chomp: true)
 
 records_with_conditions = records.map do |record|
   left, right = record.split
-  [left, right.split(',').map(&:to_i)]
+  [left, right.split(',').map(&:to_i).freeze].freeze
 end
 
-def valid?(records, conditions)
-  records.split('.').reject(&:empty?).map(&:size) == conditions
-end
+CACHE = {}
 
-# puts records.inspect
+def arrangements(record, conditions)
+  puts "arr, record: #{record}, conds: #{conditions}"
+  # debugger if record == '#?.?.?'
+  cache_key = [record, conditions]
+  return CACHE[cache_key] if CACHE.key?(cache_key)
 
-assert valid?(".#.", [1])
-assert valid?("..##..#..", [2, 1])
-assert !valid?("..##..##..", [2, 1])
+  if record.nil? || record.empty?
+    return 1 if conditions.empty?
+    return 1 if conditions == [0]
 
-CACHE_POSSIBLE = {}.freeze
-
-def possible?(record, conditions)
-  return CACHE_POSSIBLE[[record, conditions]] if CACHE_POSSIBLE[[record, conditions]]
-
-  res = _possible?(record, conditions)
-  CACHE_POSSIBLE[[record, conditions]] = res
-  res
-end
-
-def _possible?(record, conditions)
-  return false if record.count('#') > conditions.sum
-  return false if record.count('#') + record.count('?') < conditions.sum
-
-  # debugger
-  fixed_part = record[...(record.index('?') || record.size)]
-  fixed_conditions = fixed_part.split('.').reject(&:empty?).map(&:size)
-
-  if fixed_part.end_with?('#')
-    fixed_conditions_to_test = fixed_conditions[...-1]
-    fixed_part_to_test, last_group = /([\.#]*\.)?(#+$)/.match(fixed_part)[1..2]
-    return false if fixed_part_to_test && !valid?(fixed_part_to_test, conditions[...fixed_conditions_to_test.size])
-    return false if last_group.size > (conditions[fixed_conditions.size - 1] || 0)
-  else
-    fixed_conditions_to_test = fixed_conditions
-    fixed_part_to_test = fixed_part
-    return false unless valid?(fixed_part_to_test, conditions[...fixed_conditions_to_test.size])
+    return 0
   end
 
-  true
+  cons = conditions.dup
+  result = case record[0]
+           when '#'
+             con = cons[0]
+             if con.nil? || record.size < con || con < 0
+               0
+             elsif record[...con].match(/(#|\?){#{con}}/)
+               if record[con] == '#'
+                 0
+               else
+                # debugger if record == '#??.###???.###???.###???.###???.###'
+                 arrangements(".#{record[con+1..]}", cons[1..])
+               end
+             else
+               0
+             end
+           when '?'
+             if conditions.first.nil?
+               arrangements(".#{record[1..]}", conditions)
+             elsif conditions.first < 0
+               0
+             elsif conditions.first == 0
+               cons.shift
+               arrangements(".#{record[1..]}", cons)
+             else
+               puts "\task for #{".#{record[1..]}"}, #{conditions}"
+               puts "\t\t#{"##{record[1..]}"}, #{conditions}"
+               arrangements(".#{record[1..]}", conditions) + arrangements("##{record[1..]}", conditions)
+             end
+           when '.'
+             if conditions.first == 0
+               cons.shift
+               arrangements(record[1..], cons)
+             else
+               arrangements(record[1..], conditions)
+             end
+           else
+             raise "Unexpected #{record[0]}"
+           end
+
+  CACHE[cache_key] = result
+
+  puts "#{record} #{conditions} => #{result}"
+
+  result
 end
 
-def count_possibilities(record, conditions)
-  el = HeapElement.new(record, record.index('?') || record.size)
+# assert_eq 1, arrangements('#', [1])
+# assert_eq 1, arrangements('?', [1])
+# assert_eq 0, arrangements('.', [1])
 
-  heap = MaxHeap.new
-  heap << el
+# assert_eq 1, arrangements('', [])
+# assert_eq 0, arrangements('', [1])
+# assert_eq 0, arrangements('', [1, 2])
 
-  valids = 0
+# assert_eq 1, arrangements('##', [2])
+# assert_eq 1, arrangements('###', [3])
+# assert_eq 0, arrangements('##', [1])
+# assert_eq 0, arrangements('##', [3])
 
-  until heap.empty?
-    current = heap.pop.value
+# assert_eq 1, arrangements('.#', [1])
+# assert_eq 1, arrangements('#.#', [1, 1])
 
-    puts "testing: #{current}, conditions: #{conditions}" if DEBUG
+# assert_eq 1, arrangements('?.?', [1, 1])
+# assert_eq 2, arrangements('??.?.?', [1, 1, 1])
 
-    if current.index('?').nil?
-      if valid?(current, conditions)
-        valids += 1
-        puts "\tvalid: #{current}" if DEBUG
-      elsif DEBUG
-        puts "\tinvalid: #{current}"
-      end
-      next
-    end
+# assert_eq 2, arrangements('??', [1])
 
-    possible = possible?(current, conditions)
-    puts "\tpossible: #{possible}" if DEBUG
-    next unless possible?(current, conditions)
+# assert_eq 4, arrangements('.??..??...?##.', [1, 1, 3])
 
-    nel = current.sub('?', '.')
-    heap << HeapElement.new(nel, nel.index('?') || nel.size)
-    nel = current.sub('?', '#')
-    heap << HeapElement.new(nel, nel.index('?') || nel.size)
-  end
 
-  valids
+# assert_eq 2, arrangements('#????', [2, 1])
+
+# assert_eq 10, arrangements('???????', [2, 1])
+
+
+# assert_eq 10, arrangements('?###????????', [3, 2, 1])
+
+# puts 'OK'
+
+# result = records_with_conditions.map do |record, conditions|
+#   # puts "#{record} #{conditions} => #{arrangements(record, conditions)}"
+#   arrangements(record, conditions)
+# end.sum
+
+# puts "part 1: #{result}"
+
+
+def unfolded_arrangements(record, conditions)
+
+  arrangements(Array.new(5) { record }.join('?'), conditions*5)
 end
 
-CACHE = {}.freeze
+assert_eq 1, unfolded_arrangements('???.###', [1, 1, 3])
 
-def count_possibilities_cached(record, conditions)
-  # puts "ask cached: #{record}, conditions: #{conditions}" if DEBUG
-  if CACHE[[record, conditions]]
-    puts "process record: #{record}, conditions: #{conditions}: cache hit: #{CACHE[[record, conditions]]}" if DEBUG
-    return CACHE[[record, conditions]]
-  end
-
-  res = count_possibilities_rec(record, conditions)
-  puts "process record: #{record}, conditions: #{conditions}: cache miss: #{res}" if DEBUG
-  CACHE[[record, conditions]] = res
-  res
-end
-
-def count_possibilities_rec(record, conditions)
-  # puts "ask rec: #{record}, conditions: #{conditions}" if DEBUG
-  debugger if record == '#???###??????????###??????????###??????????###?????????'
-
-  if record.nil?
-    return conditions.empty? ? 1 : 0
-  end
-
-  case record[0]
-  when nil
-    conditions.empty? ? 1 : 0
-  when '.'
-    count_possibilities_cached(record[1..], conditions)
-  when '#'
-    number_of_dash = conditions.first
-    return 0 if number_of_dash.nil?
-    return 0 if record.size < number_of_dash
-    return 0 if record[0...number_of_dash].count('.') > 0
-    return 0 if record[number_of_dash] == '#'
-
-    next_record = record[number_of_dash+1..]
-    count_possibilities_cached(next_record, conditions[1..])
-  when '?'
-    count_possibilities_cached(record.sub('?', '#'), conditions) + count_possibilities_cached(record.sub('?', '.'), conditions)
-  end
-end
-
-assert_eq 1, count_possibilities_cached('?', [1])
-assert_eq 1, count_possibilities_cached('..#', [1])
-assert_eq 0, count_possibilities_cached('.##', [1])
-assert_eq 2, count_possibilities_cached('.??', [1])
-assert_eq 2, count_possibilities_cached('.?.?', [1])
-
-steps = 0
-part1 = records_with_conditions.map do |record, conditions|
-  steps += 1
-  puts "steps: #{steps} | record: #{record}, conditions: #{conditions}"
-  count_possibilities(record, conditions)
+result = records_with_conditions.map do |record, conditions|
+  unfolded_arrangements(record, conditions)
 end.sum
 
-puts "part1: #{part1}"
-
-def count_possibilities_unfolded(record, conditions)
-  unfolded = "#{record}?" * 5
-  conditions *= 5
-
-  count_possibilities(unfolded, conditions)
-end
-
-# # assert_eq 1, count_possibilities_cached('???.###', [1, 1, 3])
-assert_eq 16384, count_possibilities_unfolded('.??..??...?##.', [1, 1, 3])
-assert_eq 16, count_possibilities_unfolded('????.#...#...', [4, 1, 1])
-assert_eq 2500, count_possibilities_unfolded('????.######..#####.', [1, 6, 5])
-
-# assert_eq 1, count_possibilities_cached('#??.###', [1,1,3])
-
-# assert_eq 506250, count_possibilities_unfolded('?###????????', [3,2,1])
-
-# # 759375
-
-steps = 0
-part2 = records_with_conditions.map do |record, conditions|
-  steps += 1
-  puts "steps: #{steps} | record: #{record}, conditions: #{conditions}"
-  count_possibilities_unfolded(record, conditions)
-end.sum
-
-puts "part2: #{part2}"
+puts "part2: #{result}"
