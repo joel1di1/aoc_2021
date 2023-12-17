@@ -6,10 +6,7 @@ require 'byebug'
 require 'set'
 require_relative '../../fwk'
 
-grid = File.readlines("#{__dir__}/input16.txt", chomp: true).map(&:chars)
-
 class Grid
-
   attr_reader :energized
 
   def initialize(grid)
@@ -140,81 +137,102 @@ class Beam
 end
 # rubocop:enable Metrics/CyclomaticComplexity
 
-grid = Grid.new(grid)
+class Problem
+  def initialize(grid, x_start, y_start, direction_start)
+    @grid = Grid.new(grid)
+    @beams = []
+    @beams << Beam.new(@grid, x_start, y_start, direction_start)
 
-beams = []
+    @all_beams_str = Set.new
+    @all_beams_str << @beams.first.to_s
+    @grid.mark_all(@beams)
 
-beams << Beam.new(grid, 0, 0, :right)
+    @situations = Set.new
+  end
 
-all_beams_str = Set.new
-all_beams_str << beams.first.to_s
-grid.mark_all(beams)
+  def move_all_once(beams)
+    beams.map(&:next).flatten
+  end
 
-situations = Set.new
-
-def move_all_once(beams)
-  beams.map(&:next).flatten
-end
-
-def display_grid_with_beams(grid, beams)
-  (0...grid.x_size).each do |x|
-    (0...grid.y_size).each do |y|
-      if beams.any? { |b| b.x == x && b.y == y }
-        print grid[x, y].red
-      else
-        print grid[x, y]
+  def display_grid_with_beams(grid, beams)
+    (0...grid.x_size).each do |x|
+      (0...grid.y_size).each do |y|
+        if beams.any? { |b| b.x == x && b.y == y }
+          print grid[x, y].red
+        else
+          print grid[x, y]
+        end
       end
+      puts
     end
     puts
   end
-  puts
-end
 
-def display_grid_with_ernergized_beams(grid)
-  (0...grid.x_size).each do |x|
-    (0...grid.y_size).each do |y|
-      if grid.energized.include?([x, y])
-        print "#"
-      else
-        print '.'
+  def display_grid_with_ernergized_beams(grid)
+    (0...grid.x_size).each do |x|
+      (0...grid.y_size).each do |y|
+        if grid.energized.include?([x, y])
+          print "#"
+        else
+          print '.'
+        end
       end
+      puts
     end
     puts
   end
-  puts
-end
 
-def energized_cells(grid, beams)
-  (0...grid.x_size).map do |x|
-    (0...grid.y_size).map do |y|
-      if beams.any? { |b| b.x == x && b.y == y }
-        1
-      else
-        0
+  def energized_cells(grid, beams)
+    (0...grid.x_size).map do |x|
+      (0...grid.y_size).map do |y|
+        if beams.any? { |b| b.x == x && b.y == y }
+          1
+        else
+          0
+        end
       end
-    end
-  end.flatten.sum
-end
-
-count = 0
-until beams.empty?
-  puts "Iteration #{count}" if count % 100 == 0
-
-  beams = move_all_once(beams)
-
-  # display_grid_with_beams(grid, beams)
-
-  beams.reject! do |beam|
-    all_beams_str.include?(beam.to_s)
+    end.flatten.sum
   end
 
-  grid.mark_all(beams)
+  def solve
+    count = 0
+    until @beams.empty?
+      @beams = move_all_once(@beams)
 
-  all_beams_str.merge(beams.map(&:to_s))
+      # display_grid_with_beams(grid, beams)
 
-  count += 1
+      @beams.reject! do |beam|
+        @all_beams_str.include?(beam.to_s)
+      end
+
+      @grid.mark_all(@beams)
+
+      @all_beams_str.merge(@beams.map(&:to_s))
+
+      count += 1
+    end
+
+    @grid.energized_cells
+  end
 end
 
-# display_grid_with_ernergized_beams(grid)
+# Part 1
+grid = File.readlines("#{__dir__}/input16.txt", chomp: true).map { |line| line.chars.freeze }.freeze
+problem = Problem.new(grid, 0, 0, :right)
+puts "Part 1: #{problem.solve}"
 
-puts "Part 1: #{grid.energized_cells}"
+results = (0...grid.size).map do |x|
+  [[0, :right], [grid[0].size-1, :left]].map do |y, direction|
+    problem = Problem.new(grid, x, y, direction)
+    problem.solve
+  end
+end.flatten.max
+
+results2 = (0...grid[0].size).map do |x|
+  [[0, :down], [grid.size-1, :up]].map do |y, direction|
+    problem = Problem.new(grid, y, x, direction)
+    problem.solve
+  end
+end.flatten.max
+
+puts "Part 2: #{[results, results2].max}"
