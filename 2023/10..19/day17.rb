@@ -79,56 +79,170 @@ class Node
   end
 end
 
+class HeapElementWithDistance
+  attr_reader :value, :priority, :distance
 
-# find the shortest path between two nodes in a graph
-# Nodes must respond to #neighbors and #cost(neighbor)
-def adpated_dijkstra(start_x, start_y, debug_every: nil)
-  # Create a set to store the nodes that have been visited
-  visited = Set.new
+  def initialize(value, priority, distance)
+    @value = value
+    @priority = priority
+    @distance = distance
+  end
 
-  # Create a priority queue to store the nodes that need to be processed
-  # The priority queue will be sorted by the distance from the start node
-  pq = PriorityQueue.new
+  def <=>(other)
+    @priority <=> other.priority
+  end
 
-  # Add the start node to the priority queue with a distance of 0
-  pq.push(Node.new(start_x, start_y, :down, 3), 0)
-  pq.push(Node.new(start_x, start_y, :right, 3), 0)
+  def <=(other)
+    @priority <= other.priority
+  end
+
+  def >=(other)
+    @priority >= other.priority
+  end
+
+  def <(other)
+    @priority < other.priority
+  end
+
+  def >(other)
+    @priority > other.priority
+  end
+end
+
+class PriorityQueueWithDistance
+  def initialize
+    @min_heap = MinHeap.new
+  end
+
+  def push(element, priority, distance)
+    @min_heap << HeapElement.new(element, priority, distance)
+  end
+
+  def pop
+    element = @min_heap.pop
+    [element.value, element.priority]
+  end
+
+  def empty?
+    @min_heap.empty?
+  end
+
+  def size
+    @min_heap.size
+  end
+
+  def array
+    @min_heap.array
+  end
+end
+
+
+
+
+
+# // A* finds a path from start to goal.
+# // h is the heuristic function. h(n) estimates the cost to reach goal from node n.
+# function A_Star(start, goal, h)
+#     // The set of discovered nodes that may need to be (re-)expanded.
+#     // Initially, only the start node is known.
+#     // This is usually implemented as a min-heap or priority queue rather than a hash-set.
+#     openSet := {start}
+
+#     // For node n, cameFrom[n] is the node immediately preceding it on the cheapest path from the start
+#     // to n currently known.
+#     cameFrom := an empty map
+
+#     // For node n, gScore[n] is the cost of the cheapest path from start to n currently known.
+#     gScore := map with default value of Infinity
+#     gScore[start] := 0
+
+#     // For node n, fScore[n] := gScore[n] + h(n). fScore[n] represents our current best guess as to
+#     // how cheap a path could be from start to finish if it goes through n.
+#     fScore := map with default value of Infinity
+#     fScore[start] := h(start)
+
+#     while openSet is not empty
+#         // This operation can occur in O(Log(N)) time if openSet is a min-heap or a priority queue
+#         current := the node in openSet having the lowest fScore[] value
+#         if current = goal
+#             return reconstruct_path(cameFrom, current)
+
+#         openSet.Remove(current)
+#         for each neighbor of current
+#             // d(current,neighbor) is the weight of the edge from current to neighbor
+#             // tentative_gScore is the distance from start to the neighbor through current
+#             tentative_gScore := gScore[current] + d(current, neighbor)
+#             if tentative_gScore < gScore[neighbor]
+#                 // This path to neighbor is better than any previous one. Record it!
+#                 cameFrom[neighbor] := current
+#                 gScore[neighbor] := tentative_gScore
+#                 fScore[neighbor] := tentative_gScore + h(neighbor)
+#                 if neighbor not in openSet
+#                     openSet.add(neighbor)
+
+#     // Open set is empty but goal was never reached
+#     return failure
+
+def a_star(start_x, start_y, debug_every: nil)
+  # The set of discovered nodes that may need to be (re-)expanded.
+  # Initially, only the start node is known.
+  # This is usually implemented as a min-heap or priority queue rather than a hash-set.
+  open_set = PriorityQueueWithDistance.new
+
+  # For node n, cameFrom[n] is the node immediately preceding it on the cheapest path from the start
+  # to n currently known.
+  came_from = {}
+
+  # For node n, gScore[n] is the cost of the cheapest path from start to n currently known.
+  g_score = Hash.new(Float::INFINITY)
+  start1 = Node.new(start_x, start_y, :right, 3)
+  start2 = Node.new(start_x, start_y, :down, 3)
+  g_score[start1] = 0
+  g_score[start2] = 0
+
+  # For node n, fScore[n] := gScore[n] + h(n). fScore[n] represents our current best guess as to
+  # how cheap a path could be from start to finish if it goes through n.
+  f_score = Hash.new(Float::INFINITY)
+  f_score[start1] = 0
+  f_score[start2] = 0
+
+  # The set of discovered nodes that may need to be (re-)expanded.
+  # Initially, only the start node is known.
+  # This is usually implemented as a min-heap or priority queue rather than a hash-set.
+  open_set.add(start1, 0, 0)
+  open_set.add(start2, 0, 0)
 
   iter = 0
 
-  # While there are nodes in the priority queue
-  until pq.empty?
-    # Get the node with the smallest distance from the priority queue
-    current_node, distance = pq.pop
-    puts "iter: #{iter}, pq size: #{pq.size}, current node: #{current_node}, distance: #{distance}" if debug_every && iter % debug_every == 0
+  until open_set.empty?
+    # This operation can occur in O(Log(N)) time if openSet is a min-heap or a priority queue
+    current = open_set.pop
+    puts "iter: #{iter}, open_set size: #{open_set.size}, current node: #{current}, f_score: #{f_score[current]}" if debug_every && iter % debug_every == 0
 
     # If the current node is the end node, return the distance
-    return distance + current_node.inner_cost if current_node.end?
+    return f_score[current] if current == [GRID.size - 1, GRID[0].size - 1]
 
-    # Mark the current node as visited
-    # puts "visited: #{visited}"
-    visited.add(current_node)
+    current.neighbors.each do |neighbor|
+      # d(current,neighbor) is the weight of the edge from current to neighbor
+      # tentative_gScore is the distance from start to the neighbor through current
+      tentative_g_score = g_score[current] + neighbor.inner_cost
 
-    # For each neighbor of the current node
-    current_node.neighbors.each do |neighbor|
-      # If the neighbor has not been visited
-      # puts "neighbor: #{neighbor}"
-      next if visited.include?(neighbor)
+      next unless tentative_g_score < g_score[neighbor]
 
-      # Calculate the distance to the neighbor as the distance to the current node plus the cost of the edge between the current node and the neighbor
-      neighbor_distance = distance + current_node.cost(neighbor)
-
-      # Add the neighbor to the priority queue with the calculated distance
-      # puts "pushing neighbor: #{neighbor}, distance: #{neighbor_distance}"
-      pq.push(neighbor, neighbor_distance)
+      # This path to neighbor is better than any previous one. Record it!
+      came_from[neighbor] = current
+      g_score[neighbor] = tentative_g_score
+      f_score[neighbor] = tentative_g_score + (GRID.size - neighbor.x - 1) + (GRID[0].size - neighbor.y - 1)
+      open_set.add(neighbor)
     end
     iter += 1
-
   end
 
-  # If the end node was not reached, return nil
+  # Open set is empty but goal was never reached
   nil
 end
 
-res = adpated_dijkstra(0, 0, debug_every: 10000)
-puts "res: #{res}"
+res = a_star(0, 0, debug_every: 1000)
+
+puts res
+
