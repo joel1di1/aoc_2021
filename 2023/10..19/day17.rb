@@ -67,7 +67,7 @@ class Node
   end
 
   def ==(other)
-    x == other.x && y == other.y && direction == other.direction && direction_left == other.direction_left
+    x == other.x && y == other.y && direction == other.direction
   end
 
   def eql?(other)
@@ -75,7 +75,7 @@ class Node
   end
 
   def <=>(other)
-    [x, y, direction, direction_left] <=> [other.x, other.y, other.direction, other.direction_left]
+    [x, y, direction] <=> [other.x, other.y, other.direction]
   end
 end
 
@@ -115,12 +115,12 @@ class PriorityQueueWithDistance
   end
 
   def push(element, priority, distance)
-    @min_heap << HeapElement.new(element, priority, distance)
+    @min_heap << HeapElementWithDistance.new(element, priority, distance)
   end
 
   def pop
     element = @min_heap.pop
-    [element.value, element.priority]
+    [element.value, element.priority, element.distance]
   end
 
   def empty?
@@ -209,18 +209,18 @@ def a_star(start_x, start_y, debug_every: nil)
   # The set of discovered nodes that may need to be (re-)expanded.
   # Initially, only the start node is known.
   # This is usually implemented as a min-heap or priority queue rather than a hash-set.
-  open_set.add(start1, 0, 0)
-  open_set.add(start2, 0, 0)
+  open_set.push(start1, 0, 0)
+  open_set.push(start2, 0, 0)
 
   iter = 0
 
   until open_set.empty?
     # This operation can occur in O(Log(N)) time if openSet is a min-heap or a priority queue
-    current = open_set.pop
+    current, priority, distance = open_set.pop
     puts "iter: #{iter}, open_set size: #{open_set.size}, current node: #{current}, f_score: #{f_score[current]}" if debug_every && iter % debug_every == 0
 
     # If the current node is the end node, return the distance
-    return f_score[current] if current == [GRID.size - 1, GRID[0].size - 1]
+    return f_score[current] if current.end?
 
     current.neighbors.each do |neighbor|
       # d(current,neighbor) is the weight of the edge from current to neighbor
@@ -233,7 +233,7 @@ def a_star(start_x, start_y, debug_every: nil)
       came_from[neighbor] = current
       g_score[neighbor] = tentative_g_score
       f_score[neighbor] = tentative_g_score + (GRID.size - neighbor.x - 1) + (GRID[0].size - neighbor.y - 1)
-      open_set.add(neighbor)
+      open_set.push(neighbor, f_score[neighbor], g_score[neighbor])
     end
     iter += 1
   end
@@ -242,7 +242,7 @@ def a_star(start_x, start_y, debug_every: nil)
   nil
 end
 
-res = a_star(0, 0, debug_every: 1000)
+res = a_star(0, 0, debug_every: 100000)
 
 puts res
 

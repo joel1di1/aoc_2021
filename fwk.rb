@@ -136,7 +136,7 @@ class HeapElement
   def >=(other)
     @priority >= other.priority
   end
-    
+
   def <(other)
     @priority < other.priority
   end
@@ -218,3 +218,4 @@ def dijkstra(start_node, end_node, debug_every: nil)
   # If the end node was not reached, return nil
   nil
 end
+
