@@ -51,11 +51,6 @@ class Brick
     @upper_bricks.clear
     @lower_bricks.clear
   end
-
-  def other_bricks_that_would_fall
-    @up_brick_that_would_fall ||= upper_bricks.select { |up_brick| up_brick.lower_bricks.size <= 1 }
-    @up_brick_that_would_fall + @up_brick_that_would_fall.map(&:other_bricks_that_would_fall).flatten
-  end
 end
 
 def link_to(brick, bricks_by_xy)
@@ -90,7 +85,7 @@ bricks = []
 File.readlines('input22.txt', chomp: true).map.with_index do |line, i|
 	# get name from i
 	# i is 0, 1, 2, ... and name should be A, B, C, ...
-	bricks << Brick.new(i, line)
+  bricks << Brick.new(i, line)
 end
 
 bricks_by_xy = {}
@@ -125,4 +120,25 @@ end
 
 puts "Part 1: #{bricks_can_move.size}"
 
-puts "Part 2: #{bricks.map(&:other_bricks_that_would_fall).flatten.compact.size}"
+part2 = bricks.map do |brick|
+  puts "Checking #{brick.name}"
+  falling_bricks = [brick]
+  touched = true
+  b_to_check = bricks.select{|b| b.lower_bricks.size > 0}
+  while touched
+    b_to_check -= falling_bricks
+
+    bricks_that_would_fall = b_to_check.select do |other_brick|
+      (other_brick.lower_bricks - falling_bricks).empty?
+    end
+
+    touched = bricks_that_would_fall.size > 0
+
+    falling_bricks += bricks_that_would_fall
+  end
+  falling_bricks = (falling_bricks.uniq - [brick])
+  falling_bricks.size
+end.sum
+
+
+puts "Part 2: #{part2}"
