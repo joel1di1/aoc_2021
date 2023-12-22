@@ -51,6 +51,11 @@ class Brick
     @upper_bricks.clear
     @lower_bricks.clear
   end
+
+  def other_bricks_that_would_fall
+    @up_brick_that_would_fall ||= upper_bricks.select { |up_brick| up_brick.lower_bricks.size <= 1 }
+    @up_brick_that_would_fall + @up_brick_that_would_fall.map(&:other_bricks_that_would_fall).flatten
+  end
 end
 
 def link_to(brick, bricks_by_xy)
@@ -119,3 +124,5 @@ bricks_can_move = bricks.select do |brick|
 end
 
 puts "Part 1: #{bricks_can_move.size}"
+
+puts "Part 2: #{bricks.map(&:other_bricks_that_would_fall).flatten.compact.size}"
