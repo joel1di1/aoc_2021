@@ -31,9 +31,6 @@ def display(grid_h, positions = [])
   end
 end
 
-display(grid_h)
-puts start.inspect
-
 def next_pos(positions, grid_h)
   candidates = positions.map do |pos|
     [[pos[0] + 1, pos[1]], [pos[0] - 1, pos[1]], [pos[0], pos[1] + 1], [pos[0], pos[1] - 1]]
@@ -45,15 +42,16 @@ def next_pos(positions, grid_h)
 end
 
 def next_pos_rec(positions, loop_count, grid_h)
-  loop_count.times do
+  loop_count.times do |i|
+    puts i if i % 1000 == 0
     positions = next_pos(positions, grid_h)
 
-    display(grid_h, positions)
-    puts
+    # display(grid_h, positions)
+    # puts
   end
   positions
 end
 
-res = next_pos_rec([start], 64, grid_h)
+res = next_pos_rec([start], 26501365, grid_h)
 
 puts res.size
