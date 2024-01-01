@@ -13,6 +13,8 @@ class Pulse
     @level = level
     @destination = destination
     @origin = origin
+
+    exit if level == :low && destination == 'rx'
   end
 
   def high?
@@ -68,11 +70,23 @@ class Conjunction
   end
 
   def receive(pulse)
-    @inputs[pulse.origin] = pulse.level
+    @inputs[pulse.origin.name] = pulse.level
 
     destinations.map do |destination|
       Pulse.new(self, destination, @inputs.values.all? { |level| level == :high } ? :low : :high)
     end
+  end
+end
+
+class Noop
+  attr_reader :destinations, :name
+
+  def initialize(name, destinations)
+    @destinations = destinations
+    @name = name
+  end
+
+  def receive(pulse)
   end
 end
 
@@ -104,12 +118,22 @@ lines.each do |line|
   elsif name.start_with?('%')
     name = name[1..]
     mod = FlipFlop.new(name, destinations)
-  else
+  elsif name.start_with?('&')
     name = name[1..]
     mod = Conjunction.new(name, destinations)
+  else
+    mod = Noop.new(name, destinations)
   end
 
   modules_by_name[name] = mod
+end
+
+# initialize every conjonction modules
+modules_by_name.each do |name, mod|
+  mod.destinations.each do |destination|
+    destination_mod = modules_by_name[destination]
+    destination_mod.add_input(name) if destination_mod.is_a?(Conjunction)
+  end
 end
 
 # debugger
@@ -121,12 +145,12 @@ high_pulses = []
   init_pulse = Pulse.new(nil, 'broadcaster', :low)
 
   pulses = [init_pulse]
-  puts "\niter #{i+1}"
+  puts "\niter #{i+1}" if i % 10000 == 0
 
   until pulses.empty?
     pulse = pulses.shift
 
-    puts "pulse: #{pulse.origin&.name} -#{pulse.level}-> #{pulse.destination}"
+    # puts "pulse: #{pulse.origin&.name} -#{pulse.level}-> #{pulse.destination}"
 
     low_pulses << pulse if pulse.low?
     high_pulses << pulse if pulse.high?

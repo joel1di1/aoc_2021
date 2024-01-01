@@ -65,3 +65,33 @@ end
 
 # puts "in_range: #{in_range}"
 puts "Part1: #{in_range.size}"
+
+
+# Part 2
+# k_stone : 
+# k_x = k_px + k_vx * time
+# k_y = k_py + k_vy * time
+# k_z = k_pz + k_vz * time
+
+# k_stone collide with s1 :
+# s1_x = s1_px + s1_vx * time
+# s1_y = s1_py + s1_vy * time
+# s1_z = s1_pz + s1_vz * time
+
+# k_stone collide with s2 :
+# s2_x = s2_px + s2_vx * time
+# s2_y = s2_py + s2_vy * time
+# s2_z = s2_pz + s2_vz * time
+
+# k_stone collide with s3 :
+# s3_x = s3_px + s3_vx * time
+# s3_y = s3_py + s3_vy * time
+# s3_z = s3_pz + s3_vz * time
+
+
+# k_x = k_px + k_vx * time
+# s1_x = s1_px + s1_vx * time
+# s2_x = s2_px + s2_vx * time
+# s3_x = s3_px + s3_vx * time
+
+(s1_x - s1_px)/s1_vx = (k_x - k_px)/k_vx
