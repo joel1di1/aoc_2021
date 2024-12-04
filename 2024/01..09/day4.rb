@@ -1,41 +1,35 @@
 require 'byebug'
 
-lines = File.readlines(File.join(__dir__, 'input4.txt')).map(&:strip)
+chars = File.readlines(File.join(__dir__, 'input4.txt')).map(&:strip).map(&:chars)
 
 # use regexep to count occurence of 'xmas' in each line
-REGEXPS = [/XMAS/, /SAMX/].freeze
+MASKS = [
+  {[0,0] => 'X', [0,1] => 'M', [0,2] => 'A', [0,3] => 'S'},
+  {[0,0] => 'S', [0,1] => 'A', [0,2] => 'M', [0,3] => 'X'},
+  {[0,0] => 'X', [1,0] => 'M', [2,0] => 'A', [3,0] => 'S'},
+  {[0,0] => 'S', [1,0] => 'A', [2,0] => 'M', [3,0] => 'X'},
+  {[0,0] => 'X', [1,1] => 'M', [2,2] => 'A', [3,3] => 'S'},
+  {[0,0] => 'S', [1,1] => 'A', [2,2] => 'M', [3,3] => 'X'},
+  {[0,3] => 'X', [1,2] => 'M', [2,1] => 'A', [3,0] => 'S'},
+  {[0,3] => 'S', [1,2] => 'A', [2,1] => 'M', [3,0] => 'X'},
+].freeze
 
-def count_xmas(lines)
-  lines.map do |line|
-    REGEXPS.map do |regexp|
-      line.scan(regexp).count
+def mask?(chars, i, j, mask)
+  mask.entries.all? do |coords, value|
+    i+coords[0] < chars.size && j+coords[1] < chars[i].size && chars[i+coords[0]][j+coords[1]] == value
+  end
+end
+
+def count_xmas(chars)
+  (0..chars.size-1).map do |i|
+    (0..chars[i].size-1).map do |j|
+      MASKS.map do |mask|
+        mask?(chars, i, j, mask) ? 1 : 0
+      end.sum
     end.sum
   end.sum
 end
 
-horizontal_nb = count_xmas(lines)
 
-# transpose the array to count occurence of 'xmas' in each column
-vertical_nb = count_xmas(lines.map(&:chars).transpose.map(&:join))
 
-# create a new array with all diagonal lines
-diagonal_lines_1 = []
-diagonal_lines_2 = []
-(0..lines.size + lines[0].size - 2).each do |i|
-  diagonal_lines_1 << (0..i).map do |j|
-    lines[j][i - j] if j < lines.size && i - j < lines[0].size
-  end.compact.join
-end
-
-(0..lines.size + lines[0].size - 2).each do |i|
-  diagonal_lines_2 << (0..i).map do |j|
-    lines[j][lines[0].size - i + j] if j < lines.size && lines[0].size - i + j >= 0
-  end.compact.join
-end
-
-diagonal_nb_1 = count_xmas(diagonal_lines_1)
-diagonal_nb_2 = count_xmas(diagonal_lines_2)
-
-sum = horizontal_nb + vertical_nb + diagonal_nb_1 + diagonal_nb_2
-
-puts "part1: #{sum}"
+puts "part1: #{count_xmas(chars)}"
