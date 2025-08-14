@@ -7,3 +7,5 @@ gem 'colorize'
 gem 'minitest'
 gem 'rspec', '~> 3.0'
 gem 'rubocop'
+gem 'phonelib'
+gem 'ruby-lsp-rspec', require: false

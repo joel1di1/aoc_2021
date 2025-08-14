@@ -1,25 +1,31 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    ast (2.4.2)
-    byebug (11.1.3)
+    ast (2.4.3)
+    byebug (12.0.0)
     colorize (1.1.0)
-    diff-lcs (1.5.1)
-    json (2.8.2)
-    language_server-protocol (3.17.0.3)
-    minitest (5.25.2)
+    diff-lcs (1.6.1)
+    json (2.10.2)
+    language_server-protocol (3.17.0.4)
+    lint_roller (1.1.0)
+    logger (1.7.0)
+    minitest (5.25.5)
     parallel (1.26.3)
-    parser (3.3.6.0)
+    parser (3.3.7.4)
       ast (~> 2.4.1)
       racc
+    phonelib (0.10.7)
+    prism (1.4.0)
     racc (1.8.1)
     rainbow (3.1.1)
-    regexp_parser (2.9.3)
+    rbs (3.9.2)
+      logger
+    regexp_parser (2.10.0)
     rspec (3.13.0)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
       rspec-mocks (~> 3.13.0)
-    rspec-core (3.13.2)
+    rspec-core (3.13.3)
       rspec-support (~> 3.13.0)
     rspec-expectations (3.13.3)
       diff-lcs (>= 1.2.0, < 2.0)
@@ -28,20 +34,30 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
     rspec-support (3.13.2)
-    rubocop (1.69.0)
+    rubocop (1.75.2)
       json (~> 2.3)
-      language_server-protocol (>= 3.17.0)
+      language_server-protocol (~> 3.17.0.2)
+      lint_roller (~> 1.1.0)
       parallel (~> 1.10)
       parser (>= 3.3.0.2)
       rainbow (>= 2.2.2, < 4.0)
-      regexp_parser (>= 2.4, < 3.0)
-      rubocop-ast (>= 1.36.1, < 2.0)
+      regexp_parser (>= 2.9.3, < 3.0)
+      rubocop-ast (>= 1.44.0, < 2.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 2.4.0, < 4.0)
-    rubocop-ast (1.36.2)
-      parser (>= 3.3.1.0)
+    rubocop-ast (1.44.0)
+      parser (>= 3.3.7.2)
+      prism (~> 1.4)
+    ruby-lsp (0.23.13)
+      language_server-protocol (~> 3.17.0)
+      prism (>= 1.2, < 2.0)
+      rbs (>= 3, < 4)
+      sorbet-runtime (>= 0.5.10782)
+    ruby-lsp-rspec (0.1.22)
+      ruby-lsp (~> 0.23.0)
     ruby-progressbar (1.13.0)
-    unicode-display_width (3.1.2)
+    sorbet-runtime (0.5.11998)
+    unicode-display_width (3.1.4)
       unicode-emoji (~> 4.0, >= 4.0.4)
     unicode-emoji (4.0.4)
 
@@ -52,8 +68,10 @@ DEPENDENCIES
   byebug
   colorize
   minitest
+  phonelib
   rspec (~> 3.0)
   rubocop
+  ruby-lsp-rspec
 
 BUNDLED WITH
    2.1.2
