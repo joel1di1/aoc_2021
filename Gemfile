@@ -2,8 +2,10 @@
 
 source 'https://rubygems.org'
 
-gem 'byebug'
+ruby '3.4.7'
+
 gem 'colorize'
+gem 'debug'
 gem 'minitest'
 gem 'rspec', '~> 3.0'
 gem 'rubocop'
