@@ -11,7 +11,6 @@ lines.each do |line|
   move = direction == 'L' ? -distance : distance
   dial = (dial + move) % 100
 
-  puts "direction: #{direction}, distance: #{distance}, dial: #{dial}"
   times_to_zero += 1 if dial == 0
 end
 
@@ -19,18 +18,24 @@ puts "part 1: #{times_to_zero}"
 
 times_to_zero = 0
 dial = 50
+number_of_time_by_zero = 0
 lines.each do |line|
   direction = line[0]
   distance = line[1..].to_i
-
   move = direction == 'L' ? -distance : distance
 
-  dial += move
-  number_of_time_by_zero += if move.positive?
-                              dial / 100
+  number_of_time_by_zero += if dial == 0
+                              distance / 100
+                            elsif move > 0
+                              (dial + distance) / 100
+                            elsif dial - distance <= 0
+                              1 + ((distance - dial) / 100)
                             else
-                              (dial / 100) + 1
+                              0
                             end
 
-  puts "direction: #{direction}, distance: #{distance}, #0 = #{number_of_time_by_zero}"
+  dial += move
+  dial %= 100
 end
+
+puts "part 2: #{number_of_time_by_zero}"
