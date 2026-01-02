@@ -5,7 +5,7 @@ lines = File.readlines(File.join(__dir__, 'input4.txt'))
 MAX_X = lines.first.size
 MAX_Y = lines.size
 
-GRID = {}
+GRID = {} # rubocop:disable Style/MutableConstant
 lines.each_with_index do |line, x|
   line.chars.each_with_index do |c, y|
     GRID[[x, y]] = c
@@ -31,6 +31,11 @@ liftable = 0
   end
 end
 
-
 puts "part 1 : #{liftable}"
-puts "part 2 : #{}"
+
+
+initial_roll_count = GRID.values.select { |p| p == '@' }
+to_lift = []
+
+
+puts "part 2 : #{initial_roll_count}"
