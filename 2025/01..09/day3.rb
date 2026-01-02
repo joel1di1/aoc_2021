@@ -1,19 +1,21 @@
 require_relative '../../fwk'
 
-lines = File.readlines(File.join(__dir__, 'input3.txt'))
+LINES = File.readlines(File.join(__dir__, 'input3.txt'))
 
-total_output_joltage = lines.map do |line|
-  digits = line.chomp.chars.map(&:to_i)
+def find_joltage(d_size)
+  LINES.map do |line|
+    digits = line.chomp.chars.map(&:to_i)
 
-  d_size = 2
-  joltage = 0
-  start_index = 0
+    start_index = 0
 
-  (d_size..0).each do |d_index|
-    new_d = digits[start_index..-d_index].max
-    joltage += new_d ** 10
-    start_index = digits.find_index(new_d)
-  end
-end.sum
+    (1..d_size).to_a.reverse.map do |d_index|
+      new_d = digits[start_index..-d_index].max
+      start_index = digits[start_index..].find_index(new_d) + start_index + 1
+      new_d * (10 ** (d_index-1))
+    end.sum
+  end.sum
+end
 
-puts "part1 : #{total_output_joltage}"
+
+puts "part 1 : #{find_joltage(2)}"
+puts "part 2 : #{find_joltage(12)}"
