@@ -34,8 +34,20 @@ end
 puts "part 1 : #{liftable}"
 
 
-initial_roll_count = GRID.values.select { |p| p == '@' }
-to_lift = []
+initial_roll_count = GRID.values.select { |p| p == '@' }.count
+to_lift = [[-1, -1]]
+
+until to_lift.empty? 
+  to_lift.each { |roll| GRID.delete(roll) }
+  to_lift = []
+  
+  (0...MAX_X).each do |x|
+    (0...MAX_Y).each do |y|
+      to_lift << [x, y] if liftable?(x, y)
+    end
+  end
+
+end
 
 
-puts "part 2 : #{initial_roll_count}"
+puts "part 2 : #{initial_roll_count - GRID.values.select { |p| p == '@' }.count}"
