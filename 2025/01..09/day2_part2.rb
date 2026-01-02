@@ -15,7 +15,7 @@ def invalid?(number)
   number_s = number.to_s
   size = number_s.size
 
-  (1..size/2).each do |n|
+  (1..(size/2)).each do |n|
     next if size % n != 0
 
     slices = number_s.chars.each_slice(n).map(&:join)
