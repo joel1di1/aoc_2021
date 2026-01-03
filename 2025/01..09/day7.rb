@@ -45,6 +45,31 @@ until beams.empty?
   total_splits += splits
 end
 
-
 puts "part 1 : #{total_splits}"
-puts "part 2 : #{}"
+
+def timeline_advance(grid, timelines)
+  new_timelines = {}
+  timelines.each do |last_pos, nb_timelines|
+    down_pos = [last_pos[0], last_pos[1] + 1]
+
+    case grid[down_pos]
+    when '.'
+      new_timelines[down_pos] = nb_timelines + (new_timelines[down_pos] || 0)
+    when '^'
+      left = [down_pos[0] - 1, down_pos[1]]
+      right = [down_pos[0] + 1, down_pos[1]]
+      new_timelines[left] = nb_timelines + (new_timelines[left] || 0)
+      new_timelines[right] = nb_timelines + (new_timelines[right] || 0)
+    end
+  end
+  new_timelines
+end
+
+timelines = {}
+timelines[grid.key('S')] = 1
+
+(height-1).times do 
+  timelines = timeline_advance(grid, timelines)  
+end
+
+puts "part 2 : #{timelines.values.sum}"
