@@ -1,6 +1,6 @@
 require_relative '../../fwk'
 
-lines = File.readlines(path, chomp: true).map(&:split)
+lines = File.readlines(File.join(__dir__, 'input6.txt'), chomp: true).map(&:split)
 
 col_size = lines.first.count
 
@@ -11,21 +11,24 @@ end.sum
 
 puts "part 1 : #{grand_total}"
 
-lines = File.readlines(path, chomp: true)
+lines = File.readlines(File.join(__dir__, 'input6.txt'), chomp: false)
 op_line = lines[-1]
 num_lines = lines[0...-1]
 
 grand_total = 0 
 
 start_index = 0
-op = op_line.first
-num_size = op_line[1..].index(/[+*]/)
-numbers_s = num_lines.each_with_object(Array.new(num_size) { '' }) do |numbers_s, line|
-  (0...num_size).each do |col|
-    numbers_s[col] += line[col]  
+while start_index < op_line.size
+  op = op_line[start_index]
+  num_size = op_line[(start_index + 1)..].index(/[+*]|$/)
+  numbers_s = num_lines.each_with_object(Array.new(num_size) { '' }) do |line, numbers_s|
+    (0...num_size).each do |col|
+      numbers_s[col] += line[start_index + col] || ' '
+    end
   end
-end
 
-puts numbers_s
+  grand_total += numbers_s.map(&:to_i).reduce(op)
+  start_index += num_size + 1
+end
 
 puts "part 2 : #{grand_total}"
