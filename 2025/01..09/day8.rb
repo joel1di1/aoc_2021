@@ -61,7 +61,7 @@ class Circuit
   end
 end
 
-lines = File.readlines(File.join(__dir__, 'input7.txt'), chomp: true)
+lines = File.readlines(File.join(__dir__, 'input8.txt'), chomp: true)
 
 points = lines.map { |line| Point.new(*line.split(',').map(&:to_i)) }
 
