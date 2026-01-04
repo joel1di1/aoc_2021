@@ -105,4 +105,15 @@ circuits = points.map(&:circuit).uniq
 part1 = circuits.map(&:size).sort.reverse[0...3].reduce(:*)
 
 puts "part 1 : #{part1}"
-puts "part 2 : #{}"
+
+i = 1000
+last_a = nil
+last_b = nil
+
+until points.map(&:circuit).uniq.size == 1
+  _dist, last_a, last_b = distances[i]
+  last_a.connect(last_b)
+  i += 1
+end
+
+puts "part 2 : #{last_a.x * last_b.x}"
