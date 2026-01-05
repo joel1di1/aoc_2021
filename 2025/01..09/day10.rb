@@ -1,108 +1,5 @@
-require_relative '../../fwk'
-require 'matrix'
 require 'glpk'
 require 'tempfile'
-
-class MachineState
-  attr_accessor :lights, :buttons
-
-  def initialize(lights, buttons)
-    self.lights = lights
-    self.buttons = buttons
-  end
-
-  def inspect
-    "[#{lights.map { |l| l ? '#': '.' }.join}]"
-  end
-
-  def to_s
-    inspect
-  end
-
-  def press(button)
-    new_lights = lights.map.with_index { |prev, i| button.include?(i) ? !prev : prev }
-    MachineState.new(new_lights, buttons)
-  end
-
-  def neighbors
-    buttons.map { |button| press(button) }
-  end
-
-  def cost(_neighbor)
-    1    
-  end
-
-  def ==(other)
-    other.lights == lights
-  end
-
-  def <=>(other)
-    lights <=> other.lights
-  end
-
-  # implement eveything needed for hash key and comparison
-  def hash
-    lights.hash
-  end
-  
-  def eql?(other)
-    self == other
-  end
-end
-
-class JoltageState
-  attr_accessor :joltages, :buttons, :target
-
-  def initialize(joltages, buttons, target)
-    self.joltages = joltages
-    self.buttons = buttons
-    self.target = target
-  end
-
-  def inspect
-    "{#{joltages.join(',')} target: #{target.join(',')}}"
-  end
-
-  def to_s
-    inspect
-  end
-
-  def press(button)
-    new_joltages = joltages.map.with_index { |prev, i| button.include?(i) ? prev + 1 : prev }
-    JoltageState.new(new_joltages, buttons, target)
-  end
-
-  def neighbors
-    buttons.map { |button| press(button) }.select(&:valid?)
-  end
-
-  def valid?
-    (0...target.size).all? do |i|
-      joltages[i] <= target[i]
-    end
-  end
-
-  def cost(_neighbor)
-    1    
-  end
-
-  def ==(other)
-    other.joltages == joltages
-  end
-
-  def <=>(other)
-    joltages <=> other.joltages
-  end
-
-  # implement eveything needed for hash key and comparison
-  def hash
-    joltages.hash
-  end
-  
-  def eql?(other)
-    self == other
-  end
-end
 
 class Machine
   attr_accessor :target, :buttons, :joltages_target
@@ -114,9 +11,41 @@ class Machine
   end
 
   def shortest_to_full_on
-    start_node = MachineState.new(target.map { false }, buttons)
-    end_node = MachineState.new(target, buttons)
-    dijkstra(start_node, end_node, debug_every: 1000)
+    target_mask = mask_from_lights(target)
+    return 0 if target_mask.zero?
+
+    button_masks = buttons.map { |button| mask_from_indices(button) }
+    visited = Array.new(1 << target.size, false)
+    queue = Array.new(visited.size)
+    head = 0
+    tail = 0
+
+    start_mask = 0
+    visited[start_mask] = true
+    queue[tail] = start_mask
+    tail += 1
+
+    steps = 0
+    while head < tail
+      level_size = tail - head
+      level_size.times do
+        state = queue[head]
+        head += 1
+        return steps if state == target_mask
+
+        button_masks.each do |mask|
+          next_state = state ^ mask
+          next if visited[next_state]
+
+          visited[next_state] = true
+          queue[tail] = next_state
+          tail += 1
+        end
+      end
+      steps += 1
+    end
+
+    Float::INFINITY
   end
 
   def minimum_buttons_pressed_to_meet_joltage_requirements
@@ -161,12 +90,25 @@ class Machine
 
     Glpk::FFI.extern "int glp_term_out(int flag)" unless Glpk::FFI.respond_to?(:glp_term_out)
     Glpk::FFI.glp_term_out(0)
-    problem = Glpk.read_lp(model.path)
-    result = problem.solve(message_level: 0)
-    Glpk::FFI.glp_term_out(1)
+    begin
+      problem = Glpk.read_lp(model.path)
+      result = problem.solve(message_level: 0)
+    ensure
+      Glpk::FFI.glp_term_out(1)
+    end
     raise "GLPK failed to solve model for #{joltages_target.inspect} (status: #{result[:status]})" unless [:optimal, :feasible].include?(result[:status])
 
     result[:col_primal].sum.round
+  end
+
+  private
+
+  def mask_from_lights(lights)
+    mask_from_indices(lights.each_index.select { |i| lights[i] })
+  end
+
+  def mask_from_indices(indices)
+    indices.reduce(0) { |mask, idx| mask | (1 << idx) }
   end
 end
 
@@ -182,5 +124,5 @@ machines = lines.map do |line|
 end
 
 
-# puts "part 1 : #{machines.map(&:shortest_to_full_on).reduce(:+)}"
+puts "part 1 : #{machines.map(&:shortest_to_full_on).reduce(:+)}"
 puts "part 2 : #{machines.map(&:minimum_buttons_pressed_to_meet_joltage_requirements).reduce(:+)}"
