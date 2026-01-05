@@ -34,7 +34,7 @@ def down_all!(grid, beams)
   [new_beams, splits]
 end
 
-grid, width, height = parse_grid(File.join(__dir__, 'input7.txt'))
+grid, _width, height = parse_grid(File.join(__dir__, 'input7.txt'))
 
 
 beams = Set.new([grid.key('S')])
