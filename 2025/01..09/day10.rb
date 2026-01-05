@@ -1,7 +1,7 @@
 require_relative '../../fwk'
 require 'matrix'
+require 'glpk'
 require 'tempfile'
-
 
 class MachineState
   attr_accessor :lights, :buttons
@@ -156,27 +156,17 @@ class Machine
     lp_lines << "End"
 
     model = Tempfile.new(["glpk_model", ".lp"])
-
-    puts lp_lines.join("\n")
-
-    model.write(lp_lines.join("\n"))
+    model.write(lp_lines.join("\n") + "\n")
     model.close
 
-    solution = Tempfile.new(["glpk_solution", ".txt"])
-    solution.close
+    Glpk::FFI.extern "int glp_term_out(int flag)" unless Glpk::FFI.respond_to?(:glp_term_out)
+    Glpk::FFI.glp_term_out(0)
+    problem = Glpk.read_lp(model.path)
+    result = problem.solve(message_level: 0)
+    Glpk::FFI.glp_term_out(1)
+    raise "GLPK failed to solve model for #{joltages_target.inspect} (status: #{result[:status]})" unless [:optimal, :feasible].include?(result[:status])
 
-    solved = system("glpsol", "--lp", model.path, "-o", solution.path, out: File::NULL, err: File::NULL)
-    raise "GLPK failed to solve model for #{joltages_target.inspect}" unless solved
-
-    total_presses = 0
-    File.read(solution.path).each_line do |line|
-      next unless line =~ /^\s*\d+\s+(x\d+)\s+\*?\s+([+-]?\d+(?:\.\d+)?(?:E[+-]?\d+)?)/
-
-      value = Regexp.last_match(2).to_f
-      total_presses += value
-    end
-
-    total_presses.round
+    result[:col_primal].sum.round
   end
 end
 
@@ -194,4 +184,3 @@ end
 
 # puts "part 1 : #{machines.map(&:shortest_to_full_on).reduce(:+)}"
 puts "part 2 : #{machines.map(&:minimum_buttons_pressed_to_meet_joltage_requirements).reduce(:+)}"
-

@@ -9,6 +9,9 @@ GEM
       reline (>= 0.3.8)
     diff-lcs (1.6.2)
     erb (6.0.1)
+    fiddle (1.1.8)
+    glpk (0.3.2)
+      fiddle
     io-console (0.8.2)
     irb (1.16.0)
       pp (>= 0.6.0)
@@ -80,6 +83,7 @@ PLATFORMS
 DEPENDENCIES
   colorize
   debug
+  glpk
   minitest
   rspec (~> 3.0)
   rubocop
@@ -91,6 +95,8 @@ CHECKSUMS
   debug (1.11.0) sha256=1425db64cfa0130c952684e3dc974985be201dd62899bf4bbe3f8b5d6cf1aef2
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
   erb (6.0.1) sha256=28ecdd99c5472aebd5674d6061e3c6b0a45c049578b071e5a52c2a7f13c197e5
+  fiddle (1.1.8) sha256=7fa8ee3627271497f3add5503acdbc3f40b32f610fc1cf49634f083ef3f32eee
+  glpk (0.3.2) sha256=6199c0ec9b53d6919f42f0d16b5b1767a7828985d7a6b6c13a8132a36e390e12
   io-console (0.8.2) sha256=d6e3ae7a7cc7574f4b8893b4fca2162e57a825b223a177b7afa236c5ef9814cc
   irb (1.16.0) sha256=2abe56c9ac947cdcb2f150572904ba798c1e93c890c256f8429981a7675b0806
   json (2.18.0) sha256=b10506aee4183f5cf49e0efc48073d7b75843ce3782c68dbeb763351c08fd505
