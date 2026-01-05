@@ -1,5 +1,6 @@
 require_relative '../../fwk'
 require 'matrix'
+require 'tempfile'
 
 
 class MachineState
@@ -103,79 +104,6 @@ class JoltageState
   end
 end
 
-class JoltagePossibility
-  attr_accessor :joltages, :requirements, :buttons
-
-  def initialize(joltages, requirements, buttons)
-    self.joltages = joltages
-    self.requirements = requirements
-    self.buttons = buttons
-  end
-
-  def inspect
-    "{#{joltages.join(',')}} req: {#{requirements.join(',')}} buttons: {#{buttons.map { |b| b.join(',') }.join(' | ')}}"
-  end
-
-  def to_s
-    inspect
-  end
-
-  def valid?
-    (0...requirements.size).all? do |i|
-      joltages[i] <= requirements[i]
-    end
-  end
-
-  def neighbors
-    # take the first requirement that is not yet met
-    # search all buttons that can increase it
-    # create the combinations of pressing those buttons that will met the requirement
-    # select only the valid ones
-    generations = []
-    (0...requirements.size).each do |i|
-      next if joltages[i] >= requirements[i]
-
-      buttons_that_increase = buttons.select { |b| b.include?(i) }
-      # generate all combinations of pressing those buttons
-      combinations = (1..buttons_that_increase.size).flat_map do |n|
-        buttons_that_increase.combination(n).to_a
-      end
-
-      combinations.each do |combination|
-        new_joltages = joltages.dup
-        combination.each do |button|
-          button.each do |index|
-            new_joltages[index] += 1
-          end
-        end
-
-        possibility = JoltagePossibility.new(new_joltages, requirements, buttons)
-        generations << possibility if possibility.valid?
-      end
-
-      break
-    end
-    generations
-  end
-
-  def ==(other)
-    other.joltages == joltages
-  end
-
-  def <=>(other)
-    joltages <=> other.joltages
-  end
-
-  # implement eveything needed for hash key and comparison
-  def hash
-    joltages.hash
-  end
-  
-  def eql?(other)
-    self == other
-  end
-end
-
 class Machine
   attr_accessor :target, :buttons, :joltages_target
 
@@ -192,32 +120,63 @@ class Machine
   end
 
   def minimum_buttons_pressed_to_meet_joltage_requirements
-    # we will use linear programming to solve this problem
-    # solution will be an array of integers, each representing how many times to press each button
-    # exemple: [2, 0, 1] means press button 0 two times, button 1 zero times, button 2 one time
-    
-    # for each requirement, we will create an equation
-    # start manually for now
-    
-    # joltage_1 = N0 * b0_1 + N1 * b1_1 + N2 * b2_1 + ...
-    # joltage_2 = N0 * b0_2 + N1 * b1_2 + N2 * b2_2 + ...
-    # ...
-    # where N is the number of times to press each button
-    # and b is 1 if the button increases the joltage at that index, 0 otherwise
-    
-    # we want to minimize the sum of N0 + N1 + N2 + ...
+    num_buttons = buttons.size
+    num_joltages = joltages_target.size
 
-    matrix = buttons.map do |button|
-      target.map.with_index { |_, i| button.include?(i) ? 1 : 0 }
-    end.transpose
-    debugger
-    b = joltages_target
-    aa = Matrix[*matrix]
-    b_vector = Vector.elements(b)
-    x = aa.inverse * b_vector
-    presses = x.to_a.map(&:round)
+    coefficients = Array.new(num_joltages) { Array.new(num_buttons, 0) }
+    buttons.each_with_index do |button, button_index|
+      button.each do |joltage_index|
+        coefficients[joltage_index][button_index] = 1
+      end
+    end
 
-    presses.sum
+    lp_lines = []
+    lp_lines << "Minimize"
+    lp_lines << " obj: #{(0...num_buttons).map { |i| "x#{i}" }.join(' + ')}"
+    lp_lines << "Subject To"
+
+    (0...num_joltages).each do |joltage_index|
+      terms = (0...num_buttons).filter_map do |button_index|
+        "x#{button_index}" if coefficients[joltage_index][button_index] == 1
+      end
+
+      if terms.empty?
+        return Float::INFINITY unless joltages_target[joltage_index].zero?
+
+        next
+      end
+
+      lp_lines << " c#{joltage_index}: #{terms.join(' + ')} = #{joltages_target[joltage_index]}"
+    end
+
+    lp_lines << "Bounds"
+    (0...num_buttons).each { |i| lp_lines << " x#{i} >= 0" }
+    lp_lines << "Generals"
+    lp_lines << " #{(0...num_buttons).map { |i| "x#{i}" }.join(' ')}"
+    lp_lines << "End"
+
+    model = Tempfile.new(["glpk_model", ".lp"])
+
+    puts lp_lines.join("\n")
+
+    model.write(lp_lines.join("\n"))
+    model.close
+
+    solution = Tempfile.new(["glpk_solution", ".txt"])
+    solution.close
+
+    solved = system("glpsol", "--lp", model.path, "-o", solution.path, out: File::NULL, err: File::NULL)
+    raise "GLPK failed to solve model for #{joltages_target.inspect}" unless solved
+
+    total_presses = 0
+    File.read(solution.path).each_line do |line|
+      next unless line =~ /^\s*\d+\s+(x\d+)\s+\*?\s+([+-]?\d+(?:\.\d+)?(?:E[+-]?\d+)?)/
+
+      value = Regexp.last_match(2).to_f
+      total_presses += value
+    end
+
+    total_presses.round
   end
 end
 
@@ -234,6 +193,5 @@ end
 
 
 # puts "part 1 : #{machines.map(&:shortest_to_full_on).reduce(:+)}"
-puts "part 2 : #{machines.map(&:minimum_buttons_pressed_to_meet_joltage_requirements).reduce(:+)}}"
-
+puts "part 2 : #{machines.map(&:minimum_buttons_pressed_to_meet_joltage_requirements).reduce(:+)}"
 
