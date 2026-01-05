@@ -2,7 +2,6 @@
 
 require 'readline'
 require 'byebug'
-require 'set'
 
 def assert_eq(expected, actual, msg: nil)
   raise "Expected #{expected} but received #{actual}" if expected != actual
@@ -97,11 +96,11 @@ class Heap
   end
 
   def left_child_index(index)
-    index * 2 + 1
+    (index * 2) + 1
   end
 
   def right_child_index(index)
-    index * 2 + 2
+    (index * 2) + 2
   end
 end
 
@@ -204,13 +203,14 @@ def dijkstra(start_node, end_node, debug_every: nil)
     # For each neighbor of the current node
     current_node.neighbors.each do |neighbor|
       # If the neighbor has not been visited
-      if !visited.include?(neighbor)
-        # Calculate the distance to the neighbor as the distance to the current node plus the cost of the edge between the current node and the neighbor
-        neighbor_distance = distance + (current_node.respond_to?(:cost) ? current_node.cost(neighbor) : 1)
+      next if visited.include?(neighbor)
+              
+      # Calculate the distance to the neighbor as the distance to the current node plus the cost of the edge between the current node and the neighbor
+      neighbor_distance = distance + (current_node.respond_to?(:cost) ? current_node.cost(neighbor) : 1)
 
-        # Add the neighbor to the priority queue with the calculated distance
-        pq.push(neighbor, neighbor_distance)
-      end
+      # Add the neighbor to the priority queue with the calculated distance
+      pq.push(neighbor, neighbor_distance)
+      
     end
     iter += 1
   end
