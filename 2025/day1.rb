@@ -1,4 +1,4 @@
-require_relative '../../fwk'
+require_relative '../fwk'
 
 lines = File.readlines(File.join(__dir__, 'input1.txt'))
 

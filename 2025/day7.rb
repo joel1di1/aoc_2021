@@ -1,4 +1,4 @@
-require_relative '../../fwk'
+require_relative '../fwk'
 
 def parse_grid(path)
   rows = File.readlines(path, chomp: true)
