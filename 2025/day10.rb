@@ -1,253 +1,160 @@
-require_relative '../fwk'
-require 'glpk'
-require 'tempfile'
+require 'timeout'
 
-# Solves systems of linear equations over GF(2) (binary field) for minimal solutions
-# Used for the light-toggling puzzle where pressing a button twice = not pressing it
-class GF2Solver
-  # Solves A * x = b (mod 2) to minimize sum(x) using Gaussian elimination + enumeration
-  # Returns the minimum number of 1s in solution x, or nil if no solution exists
-  def self.solve_min_buttons(buttons, target)
-    num_lights = target.size
-    num_buttons = buttons.size
+def parse_line(line)
+  # Extract target pattern from [brackets]
+  target_match = line.match(/\[(.*?)\]/)
+  return nil unless target_match
 
-    # Build augmented matrix [A | b]
-    matrix = Array.new(num_lights) { Array.new(num_buttons + 1, 0) }
-    buttons.each_with_index do |button, btn_idx|
-      button.each { |light_idx| matrix[light_idx][btn_idx] = 1 }
-    end
-    target.each_with_index { |is_on, light_idx| matrix[light_idx][num_buttons] = is_on ? 1 : 0 }
+  target = target_match[1].chars.map { |c| c == '#' ? 1 : 0 }
 
-    # Gaussian elimination to reduced row echelon form
-    pivot_cols = []
-    current_row = 0
-
-    (0...num_buttons).each do |col|
-      # Find pivot in this column
-      pivot_row = (current_row...num_lights).find { |r| matrix[r][col] == 1 }
-      next unless pivot_row
-
-      # Swap rows
-      matrix[current_row], matrix[pivot_row] = matrix[pivot_row], matrix[current_row]
-
-      # Eliminate in all other rows (not just below)
-      (0...num_lights).each do |r|
-        next if r == current_row || matrix[r][col] == 0
-
-        (0..num_buttons).each { |c| matrix[r][c] ^= matrix[current_row][c] }
-      end
-
-      pivot_cols << col
-      current_row += 1
-      break if current_row >= num_lights
-    end
-
-    # Check for inconsistency
-    (current_row...num_lights).each do |row|
-      return nil if matrix[row][num_buttons] == 1
-    end
-
-    # Identify free variables (columns without pivots)
-    free_vars = (0...num_buttons).to_a - pivot_cols
-
-    # If no free variables, unique solution
-    if free_vars.empty?
-      solution = Array.new(num_buttons, 0)
-      pivot_cols.each_with_index do |col, row|
-        solution[col] = matrix[row][num_buttons]
-      end
-      return solution.sum
-    end
-
-    # Enumerate all 2^k combinations of free variables to find minimum
-    min_presses = Float::INFINITY
-
-    (0...(1 << free_vars.size)).each do |mask|
-      solution = Array.new(num_buttons, 0)
-
-      # Set free variables according to mask
-      free_vars.each_with_index do |var, i|
-        solution[var] = (mask >> i) & 1
-      end
-
-      # Back-substitute to find dependent variables
-      pivot_cols.each_with_index do |col, row|
-        val = matrix[row][num_buttons]
-        (0...num_buttons).each do |c|
-          val ^= matrix[row][c] * solution[c] if c != col
-        end
-        solution[col] = val
-      end
-
-      min_presses = [min_presses, solution.sum].min
-    end
-
-    min_presses
+  # Extract buttons from (parentheses)
+  buttons = []
+  line.scan(/\(([0-9,]+)\)/).each do |match|
+    button = match[0].split(',').map(&:to_i)
+    buttons << button
   end
+
+  # Extract joltage requirements from {curly braces}
+  joltage_match = line.match(/\{([0-9,]+)\}/)
+  joltage = joltage_match ? joltage_match[1].split(',').map(&:to_i) : []
+
+  { target: target, buttons: buttons, joltage: joltage }
 end
 
-# State for Dijkstra search (kept for reference, but GF2Solver is much faster)
-# Uncomment if you need to debug or verify GF2 solver results
-# class LightState
-#   attr_reader :lights, :buttons
-#
-#   def initialize(lights, buttons)
-#     @lights = lights
-#     @buttons = buttons
-#   end
-#
-#   def press(button)
-#     new_lights = lights.map.with_index { |prev, i| button.include?(i) ? !prev : prev }
-#     LightState.new(new_lights, buttons)
-#   end
-#
-#   def neighbors
-#     buttons.map { |button| press(button) }
-#   end
-#
-#   def cost(_neighbor)
-#     1
-#   end
-#
-#   def ==(other)
-#     other.lights == lights
-#   end
-#
-#   def hash
-#     lights.hash
-#   end
-#
-#   def eql?(other)
-#     self == other
-#   end
-# end
+def solve_machine_part1(target, buttons)
+  n_buttons = buttons.length
+  n_lights = target.length
 
-# Represents a machine with buttons that affect lights and joltages
-class Machine
-  attr_reader :light_target, :buttons, :joltage_target
+  # Try all subsets of buttons, starting from smallest size
+  # Since XOR is its own inverse, pressing a button twice = not pressing it
+  # So we only need to consider pressing each button 0 or 1 times
+  (0..n_buttons).each do |size|
+    (0...n_buttons).to_a.combination(size).each do |subset|
+      # Calculate the state after pressing these buttons
+      state = Array.new(n_lights, 0)
+      subset.each do |btn_idx|
+        buttons[btn_idx].each { |light| state[light] ^= 1 }
+      end
 
-  def initialize(light_target, buttons, joltage_target)
-    @light_target = light_target
-    @buttons = buttons
-    @joltage_target = joltage_target
+      # Check if we've reached the target
+      return size if state == target
+    end
   end
 
-  # Part 1: Find minimum button presses to reach target light configuration
-  # Uses GF2 solver (Gaussian elimination over binary field + free variable enumeration)
-  # This is O(n^3) for Gaussian elimination + O(2^k) for free variables where k << n
-  # Much faster than Dijkstra which explores O(2^n) states in worst case
-  def min_presses_for_lights
-    GF2Solver.solve_min_buttons(buttons, light_target)
-  end
+  -1  # No solution found
+end
 
-  # Part 2: Find minimum button presses to meet joltage requirements
-  # Uses integer linear programming (ILP) via GLPK
-  def min_presses_for_joltages
-    num_buttons = buttons.size
-    num_joltages = joltage_target.size
+def solve_machine_part2(target, buttons)
+  require 'tempfile'
 
-    # Build coefficient matrix: which buttons affect which joltages
-    coefficients = Array.new(num_joltages) { Array.new(num_buttons, 0) }
-    buttons.each_with_index do |button, btn_idx|
-      button.each { |joltage_idx| coefficients[joltage_idx][btn_idx] = 1 }
+  return 0 if target.all?(&:zero?)
+
+  # Create GLPK model file
+  lp_file = Tempfile.new(['machine', '.lp'])
+  sol_file = Tempfile.new(['solution', '.sol'])
+
+  begin
+    # Write LP problem in CPLEX LP format
+    lp_file.write("Minimize\n")
+    lp_file.write("  obj: " + buttons.length.times.map { |i| "x#{i}" }.join(" + ") + "\n") # rubocop:disable Style/StringConcatenation
+
+    lp_file.write("Subject To\n")
+    target.each_with_index do |target_val, counter_idx|
+      # Find all buttons that affect this counter
+      terms = []
+      buttons.each_with_index do |button, btn_idx|
+        terms << "x#{btn_idx}" if button.include?(counter_idx)
+      end
+
+      next if terms.empty?
+
+      lp_file.write("  c#{counter_idx}: #{terms.join(' + ')} = #{target_val}\n")
     end
 
-    # Generate LP model in CPLEX format
-    lp_lines = build_lp_model(coefficients)
+    lp_file.write("Bounds\n")
+    buttons.length.times do |i|
+      lp_file.write("  x#{i} >= 0\n")
+    end
+
+    lp_file.write("General\n")
+    lp_file.write("  " + buttons.length.times.map { |i| "x#{i}" }.join(" ") + "\n") # rubocop:disable Style/StringConcatenation
+    lp_file.write("End\n")
+
+    lp_file.flush
+
+    # write file contents for debugging
+    # puts "LP File Contents:\n#{File.read(lp_file.path)}"
 
     # Solve using GLPK
-    solve_with_glpk(lp_lines)
-  end
+    `glpsol --lp #{lp_file.path} -o #{sol_file.path} --tmlim 10 2>&1`
 
-  private
+    # Parse solution
+    if File.exist?(sol_file.path)
+      solution_content = File.read(sol_file.path)
 
-  def build_lp_model(coefficients)
-    num_buttons = buttons.size
-    num_joltages = joltage_target.size
-
-    lp_lines = []
-    lp_lines << "Minimize"
-    lp_lines << " obj: #{(0...num_buttons).map { |i| "x#{i}" }.join(' + ')}"
-    lp_lines << "Subject To"
-
-    # Each joltage constraint: sum of button presses = target
-    (0...num_joltages).each do |joltage_idx|
-      terms = (0...num_buttons).filter_map do |btn_idx|
-        "x#{btn_idx}" if coefficients[joltage_idx][btn_idx] == 1
+      # Check if optimal solution was found
+      if (solution_content =~ /Status:\s+INTEGER OPTIMAL/) && (solution_content =~ /Objective:\s+\S+\s+=\s+(\d+)/)
+        # Extract objective value (total presses)
+        return Regexp.last_match(1).to_i
       end
-
-      if terms.empty?
-        # No buttons affect this joltage - must be zero requirement
-        return nil unless joltage_target[joltage_idx].zero?
-
-        next
-      end
-
-      lp_lines << " c#{joltage_idx}: #{terms.join(' + ')} = #{joltage_target[joltage_idx]}"
     end
 
-    lp_lines << "Bounds"
-    (0...num_buttons).each { |i| lp_lines << " x#{i} >= 0" }
-    lp_lines << "Generals"
-    lp_lines << " #{(0...num_buttons).map { |i| "x#{i}" }.join(' ')}"
-    lp_lines << "End"
-
-    lp_lines
-  end
-
-  def solve_with_glpk(lp_lines)
-    return Float::INFINITY if lp_lines.nil?
-
-    model_file = Tempfile.new(["glpk_model", ".lp"])
-    model_file.write(lp_lines.join("\n") + "\n")
-    model_file.close
-
-    # Suppress GLPK output
-    Glpk::FFI.extern "int glp_term_out(int flag)" unless Glpk::FFI.respond_to?(:glp_term_out)
-    Glpk::FFI.glp_term_out(0)
-
-    problem = Glpk.read_lp(model_file.path)
-    result = problem.solve(message_level: 0)
-
-    Glpk::FFI.glp_term_out(1)
-
-    raise "GLPK failed: #{result[:status]} for target #{joltage_target.inspect}" unless [:optimal, :feasible].include?(result[:status])
-
-    result[:col_primal].sum.round
+    -1 # No solution found
   ensure
-    model_file.unlink if model_file
+    lp_file.close
+    lp_file.unlink
+    sol_file.close
+    sol_file.unlink
   end
 end
 
-# Parse input file
-# Format: [###.#.##] (0,1,2) (1,3) ... {3,5,2,...}
-#   - [###.#.##]: target light configuration (# = on, . = off)
-#   - (0,1,2): buttons - each button is a list of light/joltage indices it affects
-#   - {3,5,2,...}: joltage target values
-def parse_input(filename)
-  File.readlines(File.join(__dir__, filename), chomp: true).map do |line|
-    # Extract light target: [###.#.##]
-    light_pattern = line[/\[(.*?)\]/, 1]
-    light_target = light_pattern.chars.map { |c| c == '#' }
+def solve(input, part = 1)
+  total_presses = 0
 
-    # Extract buttons: (0,1,2) (1,3) ...
-    button_strings = line.scan(/\(([^)]+)\)/)
-    buttons = button_strings.map { |btn| btn[0].split(',').map(&:to_i) }
+  input.each_line.with_index do |line, idx|
+    line = line.strip
+    next if line.empty?
 
-    # Extract joltage requirements: {3,5,2,...}
-    joltage_pattern = line[/{([^}]+)}/, 1]
-    joltage_target = joltage_pattern.split(',').map(&:to_i)
+    machine = parse_line(line)
+    next unless machine
 
-    Machine.new(light_target, buttons, joltage_target)
+    start_time = Time.now
+    presses = if part == 1
+                solve_machine_part1(machine[:target], machine[:buttons])
+              else
+                solve_machine_part2(machine[:joltage], machine[:buttons])
+              end
+    elapsed = Time.now - start_time
+
+    if presses == -1
+      puts "Machine #{idx + 1}: No solution found! (#{elapsed.round(2)}s)"
+    else
+      puts "Machine #{idx + 1}: #{presses} presses (#{elapsed.round(2)}s)"
+      total_presses += presses
+    end
   end
+
+  puts "\nTotal button presses: #{total_presses}"
+  total_presses
 end
 
-machines = parse_input('input10.txt')
+# Main execution with timeout protection
+if __FILE__ == $PROGRAM_NAME
+  begin
+    Timeout.timeout(120) do # Increased timeout for Part 2
+      input = File.read('2025/input10.txt')
 
-# Part 1: Toggle lights to match target (Gaussian elimination over GF(2))
-part1 = machines.map(&:min_presses_for_lights).sum
-puts "part 1: #{part1}"
+      puts "=== Part 1 ==="
+      solve(input, 1)
 
-# Part 2: Meet joltage requirements (Integer Linear Programming)
-part2 = machines.map(&:min_presses_for_joltages).sum
-puts "part 2: #{part2}"
+      puts "\n=== Part 2 ==="
+      solve(input, 2)
+    end
+  rescue Timeout::Error
+    puts "Program exceeded time limit!"
+    exit 1
+  rescue Errno::ENOENT
+    puts "Error: input10.txt not found in 2025 directory"
+    exit 1
+  end
+end
