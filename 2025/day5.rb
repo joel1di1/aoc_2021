@@ -1,4 +1,4 @@
-require_relative '../../fwk'
+require_relative '../fwk'
 
 def parse_input(path)
   ranges_block, ids_block = File.read(path).split("\n\n", 2)

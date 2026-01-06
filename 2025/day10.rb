@@ -1,4 +1,4 @@
-require_relative '../../fwk'
+require_relative '../fwk'
 require 'matrix'
 require 'glpk'
 

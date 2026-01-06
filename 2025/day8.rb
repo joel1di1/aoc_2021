@@ -1,4 +1,4 @@
-require_relative '../../fwk'
+require_relative '../fwk'
 
 class Point
   attr_accessor :x, :y, :z, :circuit

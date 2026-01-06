@@ -1,4 +1,4 @@
-require_relative '../../fwk'
+require_relative '../fwk'
 
 lines = File.readlines(File.join(__dir__, 'input2.txt'))
 
@@ -13,10 +13,16 @@ end
 
 def invalid?(number)
   number_s = number.to_s
-  return false if number_s.size.odd?
+  size = number_s.size
 
-  left, right = number_s.chars.each_slice(number_s.length / 2).map(&:join)
-  left == right
+  (1..(size/2)).each do |n|
+    next if size % n != 0
+
+    slices = number_s.chars.each_slice(n).map(&:join)
+    return true if slices.uniq.size == 1
+  end
+
+  false
 end
 
 def assert_invalid(number)
@@ -31,6 +37,9 @@ end
 assert_invalid(11)
 assert_invalid(1212)
 assert_invalid(123123)
+
+assert_invalid(111)
+
 assert_valid(1)
 assert_valid(12)
 assert_valid(123)
@@ -43,4 +52,4 @@ ranges.each do |range|
   end
 end
 
-puts "part 1: #{sum}"
+puts "part 2: #{sum}"
