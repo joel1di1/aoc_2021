@@ -1,5 +1,4 @@
-require_relative '../../fwk'
-require 'set'
+require_relative '../fwk'
 
 # Represents a directed graph of devices and their connections
 class DeviceGraph

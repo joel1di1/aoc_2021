@@ -1,4 +1,4 @@
-require_relative '../../fwk'
+require_relative '../fwk'
 require 'glpk'
 require 'tempfile'
 
@@ -33,6 +33,7 @@ class GF2Solver
       # Eliminate in all other rows (not just below)
       (0...num_lights).each do |r|
         next if r == current_row || matrix[r][col] == 0
+
         (0..num_buttons).each { |c| matrix[r][c] ^= matrix[current_row][c] }
       end
 
@@ -178,6 +179,7 @@ class Machine
       if terms.empty?
         # No buttons affect this joltage - must be zero requirement
         return nil unless joltage_target[joltage_idx].zero?
+
         next
       end
 
@@ -209,16 +211,13 @@ class Machine
 
     Glpk::FFI.glp_term_out(1)
 
-    unless [:optimal, :feasible].include?(result[:status])
-      raise "GLPK failed: #{result[:status]} for target #{joltage_target.inspect}"
-    end
+    raise "GLPK failed: #{result[:status]} for target #{joltage_target.inspect}" unless [:optimal, :feasible].include?(result[:status])
 
     result[:col_primal].sum.round
   ensure
     model_file.unlink if model_file
   end
 end
-
 
 # Parse input file
 # Format: [###.#.##] (0,1,2) (1,3) ... {3,5,2,...}
