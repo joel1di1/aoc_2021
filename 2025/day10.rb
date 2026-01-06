@@ -1,8 +1,11 @@
 require_relative '../fwk'
-require 'timeout'
 require 'open3'
 require 'tempfile'
+require 'timeout'
 
+Machine = Struct.new(:diagram, :buttons, :joltage, keyword_init: true)
+
+# Precompute XOR and size for every subset of the given masks.
 def subset_xors(masks)
   n = masks.size
   total = 1 << n
@@ -20,6 +23,7 @@ def subset_xors(masks)
   [xors, weights]
 end
 
+# Meet-in-the-middle minimum presses to reach a target XOR.
 def min_presses(button_masks, target)
   half = button_masks.size / 2
   left = button_masks[0...half]
@@ -42,14 +46,14 @@ def min_presses(button_masks, target)
   best
 end
 
-def parse_line(line)
-  diagram = line[/\[(.*?)\]/, 1]
-  button_texts = line.scan(/\((.*?)\)/).map(&:first)
-  joltage_text = line[/\{(.*?)\}/, 1]
-  joltage = joltage_text ? joltage_text.split(',').map(&:to_i) : []
-  [diagram, button_texts, joltage]
+# Parse a comma-separated list of indices.
+def parse_indices(text)
+  return [] if text.strip.empty?
+
+  text.split(',').map(&:to_i)
 end
 
+# Convert a diagram like ".#.#" into a bitmask of lit lights.
 def target_mask(diagram)
   mask = 0
   diagram.chars.each_with_index do |char, idx|
@@ -58,30 +62,29 @@ def target_mask(diagram)
   mask
 end
 
+# Convert button indices into a bitmask toggle.
 def button_mask(button_text)
-  return 0 if button_text.strip.empty?
-
-  button_text.split(',').map(&:to_i).reduce(0) do |mask, idx|
+  parse_indices(button_text).reduce(0) do |mask, idx|
     mask | (1 << idx)
   end
 end
 
-def button_indices(button_text)
-  return [] if button_text.strip.empty?
-
-  button_text.split(',').map(&:to_i)
+# Extract diagrams, button texts, and joltage targets from input lines.
+def parse_machines(lines)
+  lines.map do |line|
+    diagram = line[/\[(.*?)\]/, 1]
+    button_texts = line.scan(/\((.*?)\)/).map(&:first)
+    joltage = line[/\{(.*?)\}/, 1].to_s.split(',').map(&:to_i)
+    Machine.new(diagram: diagram, buttons: button_texts, joltage: joltage)
+  end
 end
 
-def min_presses_joltage(buttons, targets)
-  vars = buttons.size
-  constraints = targets.size
-  var_names = (1..vars).map { |i| "x#{i}" }
+# Build a GLPK LP/MIP program for the joltage counters.
+def glpk_lp(buttons, targets)
+  var_names = (1..buttons.size).map { |i| "x#{i}" }
+  lp = "Minimize\n obj: #{var_names.join(' + ')}\nSubject To\n"
 
-  lp = +"Minimize\n obj: "
-  lp << var_names.join(' + ')
-  lp << "\nSubject To\n"
-
-  constraints.times do |i|
+  targets.size.times do |i|
     terms = []
     buttons.each_with_index do |indices, j|
       terms << var_names[j] if indices.include?(i)
@@ -91,10 +94,12 @@ def min_presses_joltage(buttons, targets)
 
   lp << "Bounds\n"
   var_names.each { |name| lp << " #{name} >= 0\n" }
-  lp << "Generals\n "
-  lp << var_names.join(' ')
-  lp << "\nEnd\n"
+  lp << "Generals\n #{var_names.join(' ')}\nEnd\n"
+  lp
+end
 
+# Solve the LP/MIP with glpsol and return the objective value.
+def solve_glpk(lp)
   Tempfile.create(['aoc_day10', '.lp']) do |file|
     Tempfile.create(['aoc_day10', '.sol']) do |sol|
       file.write(lp)
@@ -116,22 +121,26 @@ def min_presses_joltage(buttons, targets)
   end
 end
 
-lines = File.readlines(File.join(__dir__, 'input10.txt'), chomp: true).reject(&:empty?)
+# Minimize total presses to hit exact joltage targets.
+def min_presses_joltage(buttons, targets)
+  solve_glpk(glpk_lp(buttons, targets))
+end
 
-total_presses = lines.sum do |line|
-  diagram, button_texts, _joltage = parse_line(line)
-  buttons = button_texts.map { |text| button_mask(text) }
-  min_presses(buttons, target_mask(diagram))
+lines = File.readlines(File.join(__dir__, 'input10.txt'), chomp: true).reject(&:empty?)
+machines = parse_machines(lines)
+
+total_presses = machines.sum do |machine|
+  button_masks = machine.buttons.map { |text| button_mask(text) }
+  min_presses(button_masks, target_mask(machine.diagram))
 end
 
 puts "part 1 : #{total_presses}"
 
 begin
   Timeout.timeout(10) do
-    total_joltage = lines.sum do |line|
-      _diagram, button_texts, joltage = parse_line(line)
-      buttons = button_texts.map { |text| button_indices(text) }
-      min_presses_joltage(buttons, joltage)
+    total_joltage = machines.sum do |machine|
+      buttons = machine.buttons.map { |text| parse_indices(text) }
+      min_presses_joltage(buttons, machine.joltage)
     end
 
     puts "part 2 : #{total_joltage}"
