@@ -1,5 +1,7 @@
 require_relative '../fwk'
 require 'timeout'
+require 'open3'
+require 'tempfile'
 
 def subset_xors(masks)
   n = masks.size
@@ -70,159 +72,48 @@ def button_indices(button_text)
   button_text.split(',').map(&:to_i)
 end
 
-def rref(matrix, rhs)
-  rows = matrix.size
-  cols = matrix.first.size
-  aug = matrix.map.with_index do |row, r|
-    row.map { |v| Rational(v, 1) } + [Rational(rhs[r], 1)]
-  end
-
-  pivot_cols = []
-  r = 0
-  c = 0
-  while r < rows && c < cols
-    pivot = (r...rows).find { |i| aug[i][c] != 0 }
-    if pivot.nil?
-      c += 1
-      next
-    end
-
-    aug[r], aug[pivot] = aug[pivot], aug[r] if pivot != r
-    pivot_val = aug[r][c]
-    aug[r].map! { |v| v / pivot_val }
-
-    (0...rows).each do |i|
-      next if i == r
-      factor = aug[i][c]
-      next if factor == 0
-      aug[i] = aug[i].zip(aug[r]).map { |a, b| a - factor * b }
-    end
-
-    pivot_cols << c
-    r += 1
-    c += 1
-  end
-
-  aug.each do |row|
-    all_zero = row[0...cols].all?(&:zero?)
-    return nil if all_zero && row[cols] != 0
-  end
-
-  [aug, pivot_cols]
-end
-
 def min_presses_joltage(buttons, targets)
-  n = targets.size
-  m = buttons.size
-  matrix = Array.new(n) { Array.new(m, 0) }
-  buttons.each_with_index do |indices, j|
-    indices.each { |i| matrix[i][j] = 1 }
+  vars = buttons.size
+  constraints = targets.size
+  var_names = (1..vars).map { |i| "x#{i}" }
+
+  lp = +"Minimize\n obj: "
+  lp << var_names.join(' + ')
+  lp << "\nSubject To\n"
+
+  constraints.times do |i|
+    terms = []
+    buttons.each_with_index do |indices, j|
+      terms << var_names[j] if indices.include?(i)
+    end
+    lp << " c#{i + 1}: #{terms.join(' + ')} = #{targets[i]}\n"
   end
 
-  result = rref(matrix, targets)
-  return nil if result.nil?
-  aug, pivot_cols = result
+  lp << "Bounds\n"
+  var_names.each { |name| lp << " #{name} >= 0\n" }
+  lp << "Generals\n "
+  lp << var_names.join(' ')
+  lp << "\nEnd\n"
 
-  free_cols = (0...m).to_a - pivot_cols
-  free_count = free_cols.size
+  Tempfile.create(['aoc_day10', '.lp']) do |file|
+    Tempfile.create(['aoc_day10', '.sol']) do |sol|
+      file.write(lp)
+      file.flush
+      _stdout, _stderr, status = Open3.capture3(
+        'glpsol',
+        '--lp',
+        file.path,
+        '--output',
+        sol.path
+      )
+      return nil unless status.success?
 
-  upper_bounds = buttons.map do |indices|
-    indices.map { |idx| targets[idx] }.min
-  end
+      obj_line = File.readlines(sol.path).find { |line| line.include?('Objective:') }
+      return nil unless obj_line
 
-  pivot_rows = {}
-  pivot_cols.each_with_index { |col, row| pivot_rows[col] = row }
-
-  pivot_exprs = pivot_cols.map do |col|
-    row = aug[pivot_rows[col]]
-    const = row[m]
-    coeffs = free_cols.map { |fcol| -row[fcol] }
-    { col: col, const: const, coeffs: coeffs, ub: upper_bounds[col] }
-  end
-
-  free_bounds = free_cols.map { |col| upper_bounds[col] }
-
-  total_coeffs = free_cols.map.with_index do |_col, i|
-    coeff = Rational(1, 1)
-    pivot_exprs.each do |expr|
-      coeff += expr[:coeffs][i]
-    end
-    coeff
-  end
-
-  best = Float::INFINITY
-  assigned = Array.new(free_count, 0)
-
-  dfs = lambda do |idx, assigned_sum|
-    pivot_exprs.each do |expr|
-      min = expr[:const]
-      max = expr[:const]
-      expr[:coeffs].each_with_index do |coeff, j|
-        val = j < idx ? assigned[j] : nil
-        if j < idx
-          min += coeff * val
-          max += coeff * val
-        else
-          ub = free_bounds[j]
-          if coeff >= 0
-            max += coeff * ub
-          else
-            min += coeff * ub
-          end
-        end
-      end
-
-      low = min.ceil
-      high = max.floor
-      return if high < 0
-      return if low > expr[:ub]
-    end
-
-    min_total = assigned_sum
-    pivot_exprs.each do |expr|
-      min = expr[:const]
-      expr[:coeffs].each_with_index do |coeff, j|
-        val = j < idx ? assigned[j] : nil
-        if j < idx
-          min += coeff * val
-        else
-          ub = free_bounds[j]
-          min += coeff.negative? ? coeff * ub : 0
-        end
-      end
-      min_total += min
-    end
-    return if min_total >= best
-
-    if idx == free_count
-      pivot_vals = pivot_exprs.map do |expr|
-        val = expr[:const]
-        expr[:coeffs].each_with_index { |coeff, j| val += coeff * assigned[j] }
-        return unless val.denominator == 1
-        int_val = val.to_i
-        return if int_val.negative? || int_val > expr[:ub]
-        int_val
-      end
-
-      total = assigned_sum + pivot_vals.sum
-      best = total if total < best
-      return
-    end
-
-    ub = free_bounds[idx]
-    if total_coeffs[idx] >= 0
-      range = 0..ub
-    else
-      range = ub.downto(0)
-    end
-    range.each do |val|
-      assigned[idx] = val
-      dfs.call(idx + 1, assigned_sum + val)
+      obj_line[/=\s*([0-9.+-eE]+)/, 1].to_i
     end
   end
-
-  dfs.call(0, 0)
-  best.finite? ? best : nil
 end
 
 lines = File.readlines(File.join(__dir__, 'input10.txt'), chomp: true).reject(&:empty?)
