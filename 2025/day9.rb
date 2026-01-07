@@ -13,7 +13,7 @@ class Point
   end
 
   def area_with(other)
-    ((x - other.x) + 1).abs * ((y - other.y)+1).abs
+    ((x - other.x).abs + 1) * ((y - other.y).abs + 1)
   end
 
   def <=>(other)
@@ -126,38 +126,64 @@ def valid?(rectangle, seg_same_x, seg_same_y)
     debug "\tseg_same_x_to_check: #{seg_same_x_to_check}"
 
     i = 0
-    lefts = 0
+    inside = false
     inside_wall_x = nil
+
     while i < seg_same_x_to_check.size
       current_seg = seg_same_x_to_check[i]
       debug "\t\t current_seg: #{current_seg}"
-      # debugger
+      # segment is to the left of the rectangle
+      
       if current_seg.a.x < top_left_corner.x
-        lefts += 1
-        debug "\t\t add to lefts: #{lefts}"
-      elsif current_seg.a.x == top_left_corner.x && lefts.odd?
-        debug "\t\t encountering the wall, but with left: #{lefts}"
-        return false
-      elsif current_seg.a.x == top_left_corner.x
-        lefts += 1
-        debug "\t\t encountering the wall, correct"
-      elsif current_seg.a.x < bottom_right_corner.x && !(y == current_seg.b.y || y == current_seg.a.y)
-        debug "\t\t encountering wall inside rectangle current_seg.a.x=#{current_seg.a.x}, inside_wall_x=#{inside_wall_x}"
-        if inside_wall_x.nil?
-          inside_wall_x = current_seg.a.x
+        # segment is at the left of the rectangle
+        inside = !inside
+        debug "\t\t wall on the left, inside=#{inside}"
+      elsif top_left_corner.x <= current_seg.a.x && current_seg.b.x <= bottom_right_corner.x
+        # segment is inside the rectangle
+        if inside
+          # we are inside the rectangle
+          if inside_wall_x.nil?
+            debug "\t\t wall inside, inside=#{inside} => set inside_wall_x to #{current_seg.a.x}"
+            inside_wall_x = current_seg.a.x
+          elsif inside_wall_x + 1 == current_seg.a.x || seg_same_y.include?(Segment.new(Point.new(inside_wall_x, y), Point.new(current_seg.a.x, y)))
+            # we had seen a wall, need to check if a segment is connecting the two walls
+            # of if the 2 walls are touching
+            debug "\t\t wall inside, inside=#{inside} => ok"
+            inside_wall_x = nil
+          else
+            debug "\t\t wall inside, inside=#{inside}, inside_wall_x=#{inside_wall_x} => nok"
+            return false
+          end
+        elsif current_seg.a.x > top_left_corner.x
+          # we are outside the rectangle
+          debug "\t\t wall inside, inside=#{inside} => nok"
+          return false
         else
-          return false unless seg_same_y.include?(Segment.new(Point.new(inside_wall_x, y), Point.new(current_seg.a.x, y)))
-            
-          inside_wall_x = nil
+          debug "\t\t wall inside, inside=#{inside} => set inside_wall_x to #{current_seg.a.x}"
+          inside_wall_x = current_seg.a.x
         end
-      elsif lefts.even?
-        debug "\t\t find end wall, but no start"
-        return false
-      else
-        break
+      
+      elsif current_seg.a.x > bottom_right_corner.x
+        # segment is on the right of the rectangle
+        if inside
+          if inside_wall_x.nil?
+            debug "\t\t wall on the right, inside=#{inside}, inside_wall_x=nil => ok"
+            break 
+          else
+            debug "\t\t wall on the right, inside=#{inside}, inside_wall_x=#{inside_wall_x}"
+            return false unless seg_same_y.include?(Segment.new(Point.new(inside_wall_x, y), Point.new(current_seg.a.x, y)))
+
+            debug "\t\t wall on the right, inside=#{inside} => ok"
+            break
+          end
+        else
+          debug "\t\t wall on the right, inside=#{inside} => nok"
+          return false
+        end
       end
       i += 1
     end
+
     true
   end
 end
@@ -179,7 +205,7 @@ total_rec = rectangles_by_area.count
 i = 0
 
 largest = rectangles_by_area.find do |rectangle|
-  puts "checking rec: #{rectangle}, \tarea: #{rectangle.area} \t #{i}/#{total_rec} \t #{i/total_rec}"
+  puts "checking rec: #{rectangle}, \tarea: #{rectangle.area} \t #{i}/#{total_rec} \t #{i/total_rec}" if i % 1000 == 0
   i += 1
   valid?(rectangle, seg_same_x, seg_same_y)
 end
