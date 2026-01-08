@@ -21,7 +21,7 @@ class Point
     return comp if comp != 0
 
     y - other.y
-  end  
+  end
 end
 
 class Rectangle
@@ -42,7 +42,11 @@ class Rectangle
   end
 
   def to_s
-    "[#{a}, #{b}]"
+    "[#{a}, #{b}] area=#{area}"
+  end
+
+  def inspect
+    to_s
   end
 end
 
@@ -73,6 +77,22 @@ class Segment
     return comp if comp != 0
 
     b <=> other.b
+  end
+
+  def hash
+    [a.x, a.y, b.x, b.y].hash
+  end
+
+  def eql?(other)
+    a.x == other.a.x && a.y == other.a.y && b.x == other.b.x && b.y == other.b.y
+  end
+
+  def go_north_from?(x, y)
+    b.x == x && a.y < y
+  end
+
+  def go_south_from?(x, y)
+    a.x == x && b.y > y
   end
 end
 
@@ -107,7 +127,7 @@ end.flatten.max
 
 puts "part 1 : #{max_area}"
 
-DEBUG = false
+DEBUG = true
 def debug(s)
   puts s if DEBUG
 end
@@ -118,72 +138,83 @@ def valid?(rectangle, seg_same_x, seg_same_y)
   bottom_right_corner = Point.new([rectangle.a.x, rectangle.b.x].max, [rectangle.a.y, rectangle.b.y].max)
 
   (top_left_corner.y..bottom_right_corner.y).all? do |y|
-    debug "\tchecking y=#{y} seg to check : #{Segment.new(Point.new(top_left_corner.x, y), Point.new(bottom_right_corner.x, y))}"
+    # debug "\tchecking y=#{y} seg to check : #{Segment.new(Point.new(top_left_corner.x, y), Point.new(bottom_right_corner.x, y))}"
     seg_same_x_to_check = seg_same_x.select do |seg| 
       ([seg.a.y, seg.b.y].min..[seg.a.y, seg.b.y].max).include?(y)
     end.sort_by(&:a)
 
-    debug "\tseg_same_x_to_check: #{seg_same_x_to_check}"
+    # debug "\tseg_same_x_to_check: #{seg_same_x_to_check}"
 
     i = 0
     inside = false
-    inside_wall_x = nil
+    went_out_x = nil
 
     while i < seg_same_x_to_check.size
       current_seg = seg_same_x_to_check[i]
-      debug "\t\t current_seg: #{current_seg}"
+      # debug "\t\t current_seg: #{current_seg}"
       # segment is to the left of the rectangle
       
       if current_seg.a.x < top_left_corner.x
         # segment is at the left of the rectangle
         inside = !inside
-        debug "\t\t wall on the left, inside=#{inside}"
-      elsif top_left_corner.x <= current_seg.a.x && current_seg.b.x <= bottom_right_corner.x
-        # segment is inside the rectangle
-        if inside
-          # we are inside the rectangle
-          if inside_wall_x.nil?
-            debug "\t\t wall inside, inside=#{inside} => set inside_wall_x to #{current_seg.a.x}"
-            inside_wall_x = current_seg.a.x
-          elsif inside_wall_x + 1 == current_seg.a.x || seg_same_y.include?(Segment.new(Point.new(inside_wall_x, y), Point.new(current_seg.a.x, y)))
-            # we had seen a wall, need to check if a segment is connecting the two walls
-            # of if the 2 walls are touching
-            debug "\t\t wall inside, inside=#{inside} => ok"
-            inside_wall_x = nil
+        # debug "\t\t wall on the left, inside=#{inside}"
+      elsif current_seg.a.x == top_left_corner.x && !inside
+        inside = true
+        # debug "\t\t found left wall mark as outside, => inside"
+      elsif current_seg.a.x == top_left_corner.x && inside
+        inside = false
+        went_out_x = current_seg.a.x
+        # debug "\t\t found left wall mark as inside, went_out_x=#{went_out_x}"
+      elsif current_seg.a.x < bottom_right_corner.x && inside 
+        if y == top_left_corner.y
+          if current_seg.go_north_from?(current_seg.a.x, y)
+            # debug "\t\t top left corner going up => keep inside"
           else
-            debug "\t\t wall inside, inside=#{inside}, inside_wall_x=#{inside_wall_x} => nok"
-            return false
+            # debug "\t\t top left corner going down => outside"
+            inside = false
+            went_out_x = current_seg.a.x
           end
-        elsif current_seg.a.x > top_left_corner.x
-          # we are outside the rectangle
-          debug "\t\t wall inside, inside=#{inside} => nok"
-          return false
-        else
-          debug "\t\t wall inside, inside=#{inside} => set inside_wall_x to #{current_seg.a.x}"
-          inside_wall_x = current_seg.a.x
-        end
-      
-      elsif current_seg.a.x > bottom_right_corner.x
-        # segment is on the right of the rectangle
-        if inside
-          if inside_wall_x.nil?
-            debug "\t\t wall on the right, inside=#{inside}, inside_wall_x=nil => ok"
-            break 
+        elsif y == bottom_right_corner.y
+          if current_seg.go_south_from?(current_seg.a.x, y)
+            # debug "\t\t bottom right corner going down => keep inside"
           else
-            debug "\t\t wall on the right, inside=#{inside}, inside_wall_x=#{inside_wall_x}"
-            return false unless seg_same_y.include?(Segment.new(Point.new(inside_wall_x, y), Point.new(current_seg.a.x, y)))
+            # debug "\t\t bottom right corner going up => outside"  
+            inside = false
+            went_out_x = current_seg.a.x
+          end
+        else
+          inside = false
+          went_out_x = current_seg.a.x
+          # debug "\t\t inside and going out, went_out_x=#{went_out_x}"
+        end
+      elsif current_seg.a.x <= bottom_right_corner.x && !inside 
+        # debug "\t\t outside and going in"
+        if went_out_x.nil?
+          # debug "\t\t went_out_x is nil  => invalid"
+          return false 
+        end
+        unless seg_same_y.include?(Segment.new(Point.new(went_out_x, y), Point.new(current_seg.a.x, y))) || went_out_x + 1 == current_seg.a.x
+          # debug "\t\t no seg between went_out_x=#{went_out_x} and current_seg #{current_seg.a.x} => invalid"
+          return false 
+        end
 
-            debug "\t\t wall on the right, inside=#{inside} => ok"
-            break
-          end
-        else
-          debug "\t\t wall on the right, inside=#{inside} => nok"
-          return false
-        end
+        # debug "\t\t found right wall mark as outside => inside"
+        inside = true
+        went_out_x = nil
+      elsif bottom_right_corner.x < current_seg.a.x && !inside 
+        # debug "\t\t outside and going in"
+        return false if went_out_x.nil?
+        return false unless seg_same_y.include?(Segment.new(Point.new(went_out_x, y), Point.new(current_seg.a.x, y))) || went_out_x + 1 == current_seg.a.x
+
+      elsif bottom_right_corner.x <= current_seg.a.x && inside 
+        # debug "\t\t inside and going out, done for this y"
+        break
+      else
+        debugger
+        raise "unhandled case #{current_seg} for rectangle #{rectangle}"
       end
       i += 1
     end
-
     true
   end
 end

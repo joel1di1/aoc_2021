@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'readline'
-require 'byebug'
 
 def assert_eq(expected, actual, msg: nil)
   raise "Expected #{expected} but received #{actual}" if expected != actual
